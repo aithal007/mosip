@@ -1,0 +1,8 @@
+# Shell scripts and container init scripts must keep LF endings to run in Linux containers and CI.
+*.sh      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.conf    text eol=lf
+*.env     text eol=lf
+*.properties text eol=lf
+*.png     binary

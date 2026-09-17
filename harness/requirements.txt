@@ -1,0 +1,4 @@
+# Runtime dependencies. httpx and pyparsing are also what the upstream
+# conformance-suite scripts (run-test-plan.py, conformance.py) require.
+httpx>=0.27
+pyparsing>=3.1
