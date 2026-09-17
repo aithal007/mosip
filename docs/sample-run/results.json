@@ -1,0 +1,1385 @@
+{
+  "schemaVersion": 1,
+  "run_id": "20260916190050",
+  "started_at": "2026-09-16T19:00:51Z",
+  "finished_at": "2026-09-16T19:01:25Z",
+  "mode": "combined",
+  "components": [
+    "certify",
+    "verify"
+  ],
+  "suite_version": "release-v5.2.4",
+  "environment": {
+    "conformanceServer": "https://localhost.emobix.co.uk:8443/",
+    "certifyPublicUrl": "https://certify.inji.test/v1/certify",
+    "verifyPublicUrl": "https://verify.inji.test/v1/verify",
+    "reviewPolicy": "resolve",
+    "warningPolicy": "pass",
+    "harnessVersion": "0.1.0"
+  },
+  "plans": [
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "config_file": "..\\..\\..\\results\\20260916190050\\configs\\vci-sdjwt-preauth\\issuer-sdjwt-preauth.json",
+      "gating": true,
+      "plan_url": "https://localhost.emobix.co.uk:8443/plan-detail.html?plan=I8KtA6wmzWrG6",
+      "export_file": "",
+      "runner_exit_code": 1,
+      "selected_modules": [
+        "oid4vci-1_0-issuer-metadata-test",
+        "oid4vci-1_0-issuer-metadata-test-signed",
+        "oid4vci-1_0-issuer-happy-flow",
+        "oid4vci-1_0-issuer-happy-flow-additional-requests",
+        "oid4vci-1_0-issuer-fail-invalid-nonce",
+        "oid4vci-1_0-issuer-fail-invalid-jwt-proof-signature",
+        "oid4vci-1_0-issuer-fail-missing-proof",
+        "oid4vci-1_0-issuer-fail-unknown-credential-configuration",
+        "oid4vci-1_0-issuer-fail-on-access-token-in-query"
+      ]
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "config_file": "..\\..\\..\\results\\20260916190050\\configs\\vp-sdjwt-redirect-uri\\verifier-sdjwt-redirect-uri.json",
+      "gating": true,
+      "plan_url": "https://localhost.emobix.co.uk:8443/plan-detail.html?plan=mw32QbXY4JPWu",
+      "export_file": "",
+      "runner_exit_code": 0,
+      "selected_modules": []
+    }
+  ],
+  "modules": [
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-metadata-test",
+      "module_id": "G9HePU40t7MVHn2",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "FINISHED",
+      "suite_result": "WARNING",
+      "verdict": "PASS",
+      "verdict_reason": "passed with warnings (warning policy: pass)",
+      "issue": "",
+      "duration_seconds": 0.2,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=G9HePU40t7MVHn2",
+      "findings": [
+        {
+          "condition": "CheckForUnexpectedParametersInCredentialIssuerMetadata",
+          "result": "WARNING",
+          "message": "Unknown properties were found in the OID4VCI Credential Issuer metadata. This may indicate the sender has misunderstood the spec, or it may be using extensions the test suite is unaware of. If these are known extensions, add their names to the 'vci.allow_unexpected_credential_issuer_metadata_fields' array in the test configuration to suppress this warning. If they are derived from a specification, please open an issue at https://gitlab.com/openid/conformance-suite/-/work_items/new (or, if you ar",
+          "block": "Process Credential Issuer Metadata Response",
+          "requirements": [
+            "OID4VCI-1FINAL-12.2.3"
+          ]
+        },
+        {
+          "condition": "VCIValidateFormatOfCredentialConfigurationsInMetadata",
+          "result": "WARNING",
+          "message": "Found credential configurations with unsupported formats",
+          "block": "Process Credential Issuer Metadata Response",
+          "requirements": [
+            "OID4VCI-1FINALA-A.2",
+            "OID4VCI-1FINALA-A.3.1",
+            "OID4VCI-1FINALA-A.1"
+          ]
+        },
+        {
+          "condition": "CheckForUnexpectedParametersInServerMetadata",
+          "result": "WARNING",
+          "message": "Unknown properties were found in the OAuth Authorization Server metadata. This may indicate the sender has misunderstood the spec, or it may be using extensions the test suite is unaware of. If these are known extensions, add their names to the 'server.allow_unexpected_metadata_fields' array in the test configuration to suppress this warning. If they are derived from a specification, please open an issue at https://gitlab.com/openid/conformance-suite/-/work_items/new (or, if you are unable to, e",
+          "block": "Verify OAuth Authorization Server Metadata Response",
+          "requirements": [
+            "OID4VCI-1FINAL-12.3",
+            "OID4VCI-1FINAL-12.2.3"
+          ]
+        }
+      ],
+      "requirements": [
+        "OID4VCI-1FINAL-12.2.1",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-12.2.4",
+        "OID4VCI-1FINAL-12.3",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINALA-A.1",
+        "OID4VCI-1FINALA-A.2",
+        "OID4VCI-1FINALA-A.3.1",
+        "RFC6749-3.3",
+        "RFC7518-6.3.2.1",
+        "RFC8414-2",
+        "RFC8414-3.1",
+        "RFC8414-3.2",
+        "RFC8414-3.3"
+      ],
+      "counts": {
+        "INFO": 1,
+        "SUCCESS": 35,
+        "WARNING": 3,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-metadata-test-signed",
+      "module_id": "VqTkB4jrwcWtZrx",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "INTERRUPTED",
+      "suite_result": "FAILED",
+      "verdict": "KNOWN_ISSUE",
+      "verdict_reason": "2 failure(s) match the benchmark",
+      "issue": "https://github.com/inji/inji-certify/issues/941",
+      "duration_seconds": 0.1,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=VqTkB4jrwcWtZrx",
+      "findings": [
+        {
+          "condition": "EnsureContentTypeApplicationJwt",
+          "result": "FAILURE",
+          "message": "Couldn't find content-type header in endpoint_response",
+          "block": "Process Credential Issuer Metadata Response",
+          "requirements": [
+            "RFC8414-3.2"
+          ]
+        },
+        {
+          "condition": "VCIDecodeSignedCredentialIssuerMetadata",
+          "result": "FAILURE",
+          "message": "If present, a string is expected for credential_issuer_metadata_endpoint_response body but JsonNull was found",
+          "block": "Process Credential Issuer Metadata Response",
+          "requirements": [
+            "OID4VCI-1FINAL-12.2.2"
+          ]
+        }
+      ],
+      "requirements": [
+        "OID4VCI-1FINAL-12.2.2",
+        "RFC8414-3.2"
+      ],
+      "counts": {
+        "INFO": 1,
+        "SUCCESS": 1,
+        "FAILURE": 2,
+        "INTERRUPTED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-happy-flow",
+      "module_id": "ldk77jZfc54vcQk",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "INTERRUPTED",
+      "suite_result": "FAILED",
+      "verdict": "KNOWN_ISSUE",
+      "verdict_reason": "1 failure(s) match the benchmark",
+      "issue": "https://github.com/inji/inji-certify/issues/941",
+      "duration_seconds": 0.4,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=ldk77jZfc54vcQk",
+      "findings": [
+        {
+          "condition": "EnsureHttpStatusCodeIsAnyOf",
+          "result": "FAILURE",
+          "message": "resource endpoint returned an unexpected http status",
+          "block": " Verify Credential Endpoint Response",
+          "requirements": [
+            "OID4VCI-1FINAL-8.3"
+          ]
+        }
+      ],
+      "requirements": [
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 59,
+        "FAILURE": 1,
+        "INTERRUPTED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-happy-flow-additional-requests",
+      "module_id": "mk61k8Lub0jd5Kr",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "INTERRUPTED",
+      "suite_result": "FAILED",
+      "verdict": "KNOWN_ISSUE",
+      "verdict_reason": "1 failure(s) match the benchmark",
+      "issue": "https://github.com/inji/inji-certify/issues/941",
+      "duration_seconds": 1.8,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=mk61k8Lub0jd5Kr",
+      "findings": [
+        {
+          "condition": "RequireOnlyBCP195RecommendedCiphersForTLS12",
+          "result": "WARNING",
+          "message": "Server accepted a cipher that is not on the list of permitted ciphers",
+          "block": "Resource endpoint TLS test",
+          "requirements": [
+            "RFC9325-4.2"
+          ]
+        },
+        {
+          "condition": "EnsureHttpStatusCodeIsAnyOf",
+          "result": "FAILURE",
+          "message": "resource endpoint returned an unexpected http status",
+          "block": " Verify Credential Endpoint Response",
+          "requirements": [
+            "OID4VCI-1FINAL-8.3"
+          ]
+        }
+      ],
+      "requirements": [
+        "FAPI-ISSUES-847",
+        "FAPI2-SP-FINAL-5.2.1-1,FAPI2-SP-FINAL-5.2.1-3",
+        "FAPI2-SP-FINAL-5.2.2",
+        "FAPI2-SP-FINAL-5.2.3-2",
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9325-3.1.1",
+        "RFC9325-4.2",
+        "RFC9325A-A",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 63,
+        "WARNING": 1,
+        "FAILURE": 1,
+        "INTERRUPTED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-fail-invalid-nonce",
+      "module_id": "5PMxBG5ldc6RRTU",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.9,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=5PMxBG5ldc6RRTU",
+      "findings": [],
+      "requirements": [
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3.1",
+        "OID4VCI-1FINAL-8.3.1.2",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 60,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-fail-invalid-jwt-proof-signature",
+      "module_id": "EGAFH59RoW13ogq",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.6,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=EGAFH59RoW13ogq",
+      "findings": [],
+      "requirements": [
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-7.2.1",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3.1",
+        "OID4VCI-1FINAL-8.3.1.2",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 61,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-fail-missing-proof",
+      "module_id": "AqHefHMqjlFBKmW",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.8,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=AqHefHMqjlFBKmW",
+      "findings": [],
+      "requirements": [
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3.1",
+        "OID4VCI-1FINAL-8.3.1.2",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 60,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-fail-unknown-credential-configuration",
+      "module_id": "y64TVua4IY39RCs",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "INTERRUPTED",
+      "suite_result": "FAILED",
+      "verdict": "KNOWN_ISSUE",
+      "verdict_reason": "1 failure(s) match the benchmark",
+      "issue": "https://github.com/inji/inji-certify/issues/941",
+      "duration_seconds": 1.6,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=y64TVua4IY39RCs",
+      "findings": [
+        {
+          "condition": "VCIValidateCredentialErrorResponse",
+          "result": "FAILURE",
+          "message": "Expected error code not found in credential error response: unknown_credential_configuration",
+          "block": " Verify Credential Endpoint Response",
+          "requirements": [
+            "OID4VCI-1FINAL-8.3.1"
+          ]
+        }
+      ],
+      "requirements": [
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3.1",
+        "OID4VCI-1FINAL-8.3.1.2",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 60,
+        "FAILURE": 1,
+        "INTERRUPTED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "certify",
+      "plan_name": "oid4vci-1_0-issuer-test-plan",
+      "plan_id": "I8KtA6wmzWrG6",
+      "module_name": "oid4vci-1_0-issuer-fail-on-access-token-in-query",
+      "module_id": "XKOQPhgbX6h8b7Q",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "status": "INTERRUPTED",
+      "suite_result": "FAILED",
+      "verdict": "KNOWN_ISSUE",
+      "verdict_reason": "1 failure(s) match the benchmark",
+      "issue": "https://github.com/inji/inji-certify/issues/941",
+      "duration_seconds": 1.9,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=XKOQPhgbX6h8b7Q",
+      "findings": [
+        {
+          "condition": "EnsureHttpStatusCodeIsAnyOf",
+          "result": "FAILURE",
+          "message": "resource endpoint returned an unexpected http status",
+          "block": " Verify Credential Endpoint Response",
+          "requirements": [
+            "OID4VCI-1FINAL-8.3"
+          ]
+        }
+      ],
+      "requirements": [
+        "FAPI2-SP-FINAL-5.3.4-2",
+        "FAPI2-SP-FINAL-5.4",
+        "FAPI2-SP-FINAL-5.4.1-2",
+        "FAPI2-SP-FINAL-5.4.1-3",
+        "FAPI2-SP-FINAL-5.4.1-4",
+        "OID4VCI-1FINAL-12.2.2",
+        "OID4VCI-1FINAL-12.2.3",
+        "OID4VCI-1FINAL-3.5",
+        "OID4VCI-1FINAL-4.1",
+        "OID4VCI-1FINAL-4.1.1",
+        "OID4VCI-1FINAL-4.1.3",
+        "OID4VCI-1FINAL-5.1.1",
+        "OID4VCI-1FINAL-6.2",
+        "OID4VCI-1FINAL-7.1",
+        "OID4VCI-1FINAL-7.2",
+        "OID4VCI-1FINAL-8",
+        "OID4VCI-1FINAL-8.2",
+        "OID4VCI-1FINAL-8.3",
+        "OID4VCI-1FINALA-F.1",
+        "OIDCC-10.1",
+        "OpenID4VCI-739",
+        "RFC6749-10.10",
+        "RFC6749-4.1.4",
+        "RFC6749-5.1",
+        "RFC7517-1.1",
+        "RFC7517-4.5",
+        "RFC8414-3.1",
+        "RFC9396-7"
+      ],
+      "counts": {
+        "INFO": 10,
+        "SUCCESS": 56,
+        "FAILURE": 1,
+        "INTERRUPTED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-happy-flow",
+      "module_id": "vdJOKODghmzVVsx",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result SUCCESS matches expected SUCCESS",
+      "issue": "",
+      "duration_seconds": 3.9,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=vdJOKODghmzVVsx",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 35,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "c79BFIgWOr",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+        "detail": {
+          "transactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-minimal-cnf-jwk",
+      "module_id": "v91vMleXPNraScw",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result SUCCESS matches expected SUCCESS",
+      "issue": "",
+      "duration_seconds": 3.3,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=v91vMleXPNraScw",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 31,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "W0p0RjDeSu",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+        "detail": {
+          "transactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-request-uri-method-post",
+      "module_id": "OBi3Xca4yy9jxz4",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result SUCCESS matches expected SUCCESS",
+      "issue": "",
+      "duration_seconds": 3.5,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=OBi3Xca4yy9jxz4",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 31,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "ghB8Js9DT5",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+        "detail": {
+          "transactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-request-uri-fetched-twice",
+      "module_id": "kCqDypTwXEpYKJ9",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result SUCCESS matches expected SUCCESS",
+      "issue": "",
+      "duration_seconds": 3.5,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=kCqDypTwXEpYKJ9",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 31,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "f5uSRVrYoi",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+        "detail": {
+          "transactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-invalid-kb-jwt-signature",
+      "module_id": "AIDSvrFHXaeM9U4",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result FAILED matches expected FAILED",
+      "issue": "",
+      "duration_seconds": 4.6,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=AIDSvrFHXaeM9U4",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 31,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "eJg1efFc1h",
+        "expected": "FAILED",
+        "actual": "FAILED",
+        "matched": true,
+        "transactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+        "detail": {
+          "transactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+          "vpResultStatus": "FAILED",
+          "vcResults": [
+            {
+              "verificationStatus": "INVALID"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-invalid-credential-signature",
+      "module_id": "JCqP6FewdehnqUf",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result FAILED matches expected FAILED",
+      "issue": "",
+      "duration_seconds": 4.2,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=JCqP6FewdehnqUf",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 31,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "PvybAlf4lv",
+        "expected": "FAILED",
+        "actual": "FAILED",
+        "matched": true,
+        "transactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+        "detail": {
+          "transactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+          "vpResultStatus": "FAILED",
+          "vcResults": [
+            {
+              "verificationStatus": "INVALID"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-invalid-sd-hash",
+      "module_id": "uMDZFhQqfAoVy3U",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "REVIEW",
+      "verdict": "PASS",
+      "verdict_reason": "REVIEW resolved: Inji result FAILED matches expected FAILED",
+      "issue": "",
+      "duration_seconds": 4.4,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=uMDZFhQqfAoVy3U",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 31,
+        "REVIEW": 1,
+        "FINISHED": 1
+      },
+      "review_evidence": {
+        "placeholder": "irnLjIsq21",
+        "expected": "FAILED",
+        "actual": "FAILED",
+        "matched": true,
+        "transactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+        "detail": {
+          "transactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+          "vpResultStatus": "FAILED",
+          "vcResults": [
+            {
+              "verificationStatus": "INVALID"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-invalid-kb-jwt-nonce",
+      "module_id": "qQxx1ushLDBKHIn",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.4,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=qQxx1ushLDBKHIn",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 28,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-invalid-kb-jwt-aud",
+      "module_id": "88tobS2Nt4al2j2",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.5,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=88tobS2Nt4al2j2",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 28,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-kb-jwt-iat-in-past",
+      "module_id": "e56VQPNKtPoBgNt",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.4,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=e56VQPNKtPoBgNt",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 28,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    },
+    {
+      "component": "verify",
+      "plan_name": "oid4vp-1final-verifier-test-plan",
+      "plan_id": "mw32QbXY4JPWu",
+      "module_name": "oid4vp-1final-verifier-kb-jwt-iat-in-future",
+      "module_id": "ECRE9T3cwGUCfPH",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "status": "FINISHED",
+      "suite_result": "PASSED",
+      "verdict": "PASS",
+      "verdict_reason": "passed",
+      "issue": "",
+      "duration_seconds": 1.5,
+      "log_url": "https://localhost.emobix.co.uk:8443/log-detail.html?log=ECRE9T3cwGUCfPH",
+      "findings": [],
+      "requirements": [
+        "OID4VP-1FINAL-5",
+        "OID4VP-1FINAL-5.1",
+        "OID4VP-1FINAL-5.10",
+        "OID4VP-1FINAL-5.2",
+        "OID4VP-1FINAL-5.9.2",
+        "OID4VP-1FINAL-6",
+        "OID4VP-1FINAL-6.4.1",
+        "OID4VP-1FINAL-8.1",
+        "OID4VP-1FINAL-8.2",
+        "OID4VP-1FINAL-8.4",
+        "OID4VP-1FINALA-B.2.2",
+        "OID4VP-1FINALA-B.3.4",
+        "OIDCC-6.1",
+        "OIDCC-6.2",
+        "RFC7636-4.3",
+        "SDJWTVC-3.2.2.2"
+      ],
+      "counts": {
+        "INFO": 7,
+        "SUCCESS": 28,
+        "FINISHED": 1
+      },
+      "review_evidence": {}
+    }
+  ],
+  "shims": [
+    {
+      "component": "certify",
+      "name": "authorization_endpoint added to OAuth authorization server metadata",
+      "where": "deploy/gateway/nginx.conf",
+      "reason": "Inji Certify advertises grant type authorization_code without authorization_endpoint (RFC 8414 section 2). The suite aborts all issuance modules at setup, hiding every other result.",
+      "issue": "https://github.com/inji/inji-certify/issues/941"
+    },
+    {
+      "component": "certify",
+      "name": "credential issuer metadata served at the path-inserted well-known URL",
+      "where": "deploy/gateway/nginx.conf",
+      "reason": "OID4VCI 1.0 section 12.2.2 metadata location for issuers with a path component.",
+      "issue": "https://github.com/inji/inji-certify/issues/967"
+    }
+  ],
+  "summary": {
+    "PASS": 15,
+    "FAIL": 0,
+    "KNOWN_ISSUE": 5,
+    "STALE_BENCHMARK": 0,
+    "SKIP": 0,
+    "INCOMPLETE": 0,
+    "TOTAL": 20
+  },
+  "gatingSummary": {
+    "PASS": 15,
+    "FAIL": 0,
+    "KNOWN_ISSUE": 5,
+    "STALE_BENCHMARK": 0,
+    "SKIP": 0,
+    "INCOMPLETE": 0,
+    "TOTAL": 20
+  },
+  "gatePassed": true
+}

@@ -1,0 +1,34 @@
+# Adds the Inji Conformance Gate harness to an Inji api-testrig image so that
+# OpenIDConformanceTest can run inside the existing Helm CronJob.
+#
+#   docker build -f testrig/Dockerfile.conformance-layer \
+#     --build-arg BASE_IMAGE=injistack/apitest-inji-verify:1.0.0-alpha.1 \
+#     -t apitest-inji-verify-conformance:local .
+#
+# The base images (mosipid/openjdk-21-jre) are Debian based and ship without Python.
+ARG BASE_IMAGE=injistack/apitest-inji-verify:1.0.0-alpha.1
+FROM ${BASE_IMAGE}
+
+USER root
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 python3-pip git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY harness/requirements.txt /tmp/icg-requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/icg-requirements.txt
+
+# Harness code, plan manifests and benchmark; upstream suite scripts are fetched at the
+# pinned version so the image matches deploy/versions.env.
+COPY harness /home/inji/conformance-harness/harness
+COPY conformance /home/inji/conformance-harness/conformance
+COPY deploy/versions.env /home/inji/conformance-harness/deploy/versions.env
+COPY scripts /home/inji/conformance-harness/scripts
+RUN . /home/inji/conformance-harness/deploy/versions.env \
+ && git clone --quiet --depth 1 --filter=blob:none --sparse --branch "$CONFORMANCE_SUITE_VERSION" \
+      https://gitlab.com/openid/conformance-suite.git /home/inji/conformance-harness/upstream/conformance-suite \
+ && git -C /home/inji/conformance-harness/upstream/conformance-suite sparse-checkout set scripts \
+ && chown -R inji:inji /home/inji/conformance-harness
+
+USER inji
+ENV conformanceHarnessHome=/home/inji/conformance-harness \
+    conformancePython=python3

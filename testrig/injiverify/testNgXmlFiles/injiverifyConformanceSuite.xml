@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  OpenID conformance for Inji Verify. Include from injiverifyMasterTestSuite.xml:
+    <suite-files>
+      ...
+      <suite-file path="injiverifyConformanceSuite.xml" />
+    </suite-files>
+  Results appear in the same EmailableReport and S3 upload as the other API tests.
+-->
+<suite name="Inji-Verify OpenID Conformance">
+	<test name="OpenIDConformance">
+		<classes>
+			<class name="io.inji.testrig.apirig.injiverify.testscripts.OpenIDConformanceTest" />
+		</classes>
+	</test>
+</suite>
