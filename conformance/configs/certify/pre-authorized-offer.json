@@ -1,0 +1,12 @@
+{
+  "credential_configuration_id": "InjiConformanceSdJwt",
+  "claims": {
+    "given_name": "Asha",
+    "family_name": "Rao",
+    "birthdate": "1990-04-12",
+    "nationality": "IN",
+    "registration_id": "CONF-000123"
+  },
+  "expires_in": 600,
+  "tx_code": "482915"
+}

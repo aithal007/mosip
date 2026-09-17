@@ -1,0 +1,61 @@
+{
+  "component": "verify",
+  "displayName": "Inji Verify (OID4VP verifier)",
+  "benchmark": {
+    "expectedFailures": "conformance/benchmark/verify/expected-failures.json",
+    "expectedSkips": "conformance/benchmark/verify/expected-skips.json"
+  },
+  "plans": [
+    {
+      "id": "vp-sdjwt-redirect-uri",
+      "gating": true,
+      "description": "OID4VP 1.0 Final, SD-JWT VC, unsigned by-value request (redirect_uri client id prefix), direct_post. This is the profile Inji Verify 1.0 serves to wallets today and the one MOSIP ran manually in inji-verify#2013.",
+      "planName": "oid4vp-1final-verifier-test-plan",
+      "variant": {
+        "vp_profile": "plain_vp",
+        "credential_format": "sd_jwt_vc",
+        "client_id_prefix": "redirect_uri",
+        "request_method": "url_query",
+        "response_mode": "direct_post"
+      },
+      "modules": [],
+      "config": "conformance/configs/verify/verifier-sdjwt-redirect-uri.json"
+    }
+  ],
+  "readiness": [
+    {
+      "id": "vp-haip",
+      "description": "The certifiable OID4VP HAIP profile: signed request objects fetched by reference, x509_hash client ids and encrypted direct_post.jwt responses.",
+      "planName": "oid4vp-1final-verifier-haip-test-plan",
+      "variant": {
+        "credential_format": "sd_jwt_vc"
+      },
+      "requires": [
+        {
+          "name": "response_mode=direct_post.jwt (encrypted authorization responses)",
+          "supported": false,
+          "issue": "https://github.com/inji/inji-verify/issues/2258",
+          "note": "Every verifier on the OIDF HAIP certified list uses direct_post.jwt."
+        },
+        {
+          "name": "client_id_prefix=x509_hash with signed request_uri",
+          "supported": false,
+          "issue": "https://github.com/inji/inji-verify/issues/2238",
+          "note": "Inji Verify 1.0 signs request objects only for decentralized_identifier client ids."
+        },
+        {
+          "name": "credential_format=iso_mdl (mdoc presentations)",
+          "supported": false,
+          "issue": "https://github.com/inji/inji-verify/issues/2271",
+          "note": "Required only for the mdoc variant of the HAIP plan."
+        },
+        {
+          "name": "SD-JWT VC with DCQL query language",
+          "supported": true,
+          "issue": "",
+          "note": "Available since Inji Verify 1.0.0-alpha.1."
+        }
+      ]
+    }
+  ]
+}

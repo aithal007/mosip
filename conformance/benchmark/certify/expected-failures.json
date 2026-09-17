@@ -1,0 +1,62 @@
+[
+  {
+    "test-name": "oid4vci-1_0-issuer-metadata-test-signed",
+    "variant": "*",
+    "configuration-filename": "*issuer-sdjwt-preauth.json",
+    "current-block": "Process Credential Issuer Metadata Response",
+    "condition": "EnsureContentTypeApplicationJwt",
+    "expected-result": "failure",
+    "issue": "https://github.com/inji/inji-certify/issues/941",
+    "comment": "Signed credential issuer metadata (Accept: application/jwt, OID4VCI 1.0 section 12.2.3) is not supported; Certify returns unsigned JSON."
+  },
+  {
+    "test-name": "oid4vci-1_0-issuer-metadata-test-signed",
+    "variant": "*",
+    "configuration-filename": "*issuer-sdjwt-preauth.json",
+    "current-block": "Process Credential Issuer Metadata Response",
+    "condition": "VCIDecodeSignedCredentialIssuerMetadata",
+    "expected-result": "failure",
+    "issue": "https://github.com/inji/inji-certify/issues/941",
+    "comment": "Consequence of the missing signed metadata above."
+  },
+  {
+    "test-name": "oid4vci-1_0-issuer-happy-flow",
+    "variant": "*",
+    "configuration-filename": "*issuer-sdjwt-preauth.json",
+    "current-block": " Verify Credential Endpoint Response",
+    "condition": "EnsureHttpStatusCodeIsAnyOf",
+    "expected-result": "failure",
+    "issue": "https://github.com/inji/inji-certify/issues/941",
+    "comment": "Credential request containing an unrecognised extension parameter fails JSON binding (CredentialRequest not ignoring unknown fields) and error rendering then fails with HTTP 500 (HttpMediaTypeNotAcceptableException)."
+  },
+  {
+    "test-name": "oid4vci-1_0-issuer-happy-flow-additional-requests",
+    "variant": "*",
+    "configuration-filename": "*issuer-sdjwt-preauth.json",
+    "current-block": " Verify Credential Endpoint Response",
+    "condition": "EnsureHttpStatusCodeIsAnyOf",
+    "expected-result": "failure",
+    "issue": "https://github.com/inji/inji-certify/issues/941",
+    "comment": "JWT proof with iss=client_id is rejected ('JWT iss claim has value inji-conformance-wallet, must be <empty>'). OID4VCI 1.0 Appendix F.1 only requires omitting iss for anonymous pre-authorized access; this client authenticated with private_key_jwt."
+  },
+  {
+    "test-name": "oid4vci-1_0-issuer-fail-unknown-credential-configuration",
+    "variant": "*",
+    "configuration-filename": "*issuer-sdjwt-preauth.json",
+    "current-block": " Verify Credential Endpoint Response",
+    "condition": "VCIValidateCredentialErrorResponse",
+    "expected-result": "failure",
+    "issue": "https://github.com/inji/inji-certify/issues/941",
+    "comment": "Unknown credential_configuration_id is rejected, but without the unknown_credential_configuration error code (OID4VCI 1.0 section 8.3.1.2)."
+  },
+  {
+    "test-name": "oid4vci-1_0-issuer-fail-on-access-token-in-query",
+    "variant": "*",
+    "configuration-filename": "*issuer-sdjwt-preauth.json",
+    "current-block": " Verify Credential Endpoint Response",
+    "condition": "EnsureHttpStatusCodeIsAnyOf",
+    "expected-result": "failure",
+    "issue": "https://github.com/inji/inji-certify/issues/941",
+    "comment": "Access token sent as a URI query parameter is not rejected with the expected status (RFC 6750 section 2.3 / FAPI 2.0 forbids query tokens)."
+  }
+]

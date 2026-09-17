@@ -1,0 +1,188 @@
+# Inji Conformance Gate - full stack
+#
+#   conformance suite  : mongodb + server + nginx  (https://localhost.emobix.co.uk:8443)
+#   gateway            : TLS front for Inji        (https://certify.inji.test, https://verify.inji.test)
+#   profile "certify"  : Inji Certify + Postgres   (admin API on http://localhost:8090)
+#   profile "verify"   : Inji Verify  + Postgres   (admin API on http://localhost:8080)
+#
+# Use run-conformance.sh rather than calling this directly; it generates the gateway
+# certificate, fetches the pinned upstream config and selects the profiles.
+
+name: inji-conformance
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "1m"
+    max-file: "3"
+
+networks:
+  icg:
+    name: icg
+
+volumes:
+  suite-mongo: {}
+  certify-db: {}
+  verify-db: {}
+
+services:
+  # --------------------------------------------------------------------------------
+  # OpenID Foundation conformance suite (prebuilt images, dev mode: no login/token)
+  # --------------------------------------------------------------------------------
+  mongodb:
+    image: mongo:6.0.13
+    volumes:
+      - suite-mongo:/data/db
+    networks: [icg]
+    logging: *logging
+
+  suite-server:
+    image: registry.gitlab.com/openid/conformance-suite:${CONFORMANCE_SUITE_VERSION:-release-v5.2.4}
+    environment:
+      BASE_URL: https://localhost.emobix.co.uk:8443
+      BASE_MTLS_URL: https://localhost.emobix.co.uk:8444
+      MONGODB_HOST: mongodb
+      SPRING_PROFILES_ACTIVE: dev
+      OIDC_GOOGLE_CLIENTID: google-client
+      OIDC_GOOGLE_SECRET: google-secret
+      OIDC_GITLAB_CLIENTID: gitlab-client
+      OIDC_GITLAB_SECRET: gitlab-secret
+    depends_on: [mongodb]
+    networks:
+      icg:
+        aliases: [server]
+    logging: *logging
+
+  suite-nginx:
+    image: registry.gitlab.com/openid/conformance-suite/nginx:${CONFORMANCE_SUITE_VERSION:-release-v5.2.4}
+    ports:
+      - "8443:8443"
+      - "8444:8444"
+    depends_on: [suite-server]
+    networks:
+      icg:
+        # Inside containers this public name must reach nginx, not 127.0.0.1.
+        aliases: [nginx, localhost.emobix.co.uk]
+    logging: *logging
+
+  # --------------------------------------------------------------------------------
+  # TLS gateway: gives Inji the https origins the suite dereferences
+  # --------------------------------------------------------------------------------
+  gateway:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway/certs:/etc/nginx/certs:ro
+    ports:
+      - "9443:443"
+    networks:
+      icg:
+        aliases: [certify.inji.test, verify.inji.test]
+    logging: *logging
+
+  # --------------------------------------------------------------------------------
+  # Inji Certify 1.0 (OID4VCI issuer, built-in authorization server for pre-auth)
+  # --------------------------------------------------------------------------------
+  database:
+    profiles: [certify]
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - certify-db:/var/lib/postgresql/data
+      - ${INJI_CERTIFY_COMPOSE_DIR}/certify_init.sql:/docker-entrypoint-initdb.d/certify_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+    networks: [icg]
+    logging: *logging
+
+  certify:
+    profiles: [certify]
+    image: ${INJI_CERTIFY_IMAGE:-injistack/inji-certify-with-plugins:1.0.0-alpha.1}
+    user: root
+    ports:
+      - "8090:8090"
+    environment:
+      container_user: mosip
+      active_profile_env: default,csvdp-farmer,conformance
+      SPRING_CONFIG_NAME: certify
+      SPRING_CONFIG_LOCATION: /home/mosip/config/
+      enable_certify_artifactory: "false"
+      download_hsm_client: "false"
+      mosip_certify_domain_url: https://certify.inji.test
+    volumes:
+      - ${INJI_CERTIFY_COMPOSE_DIR}/config/certify-default.properties:/home/mosip/config/certify-default.properties:ro
+      - ${INJI_CERTIFY_COMPOSE_DIR}/config/certify-csvdp-farmer.properties:/home/mosip/config/certify-csvdp-farmer.properties:ro
+      - ${INJI_CERTIFY_COMPOSE_DIR}/config/farmer_identity_data.csv:/home/mosip/config/farmer_identity_data.csv:ro
+      - ${INJI_CERTIFY_COMPOSE_DIR}/context/farmer-context.json:/home/mosip/context/farmer-context.json:ro
+      - ./certify/certify-conformance.properties:/home/mosip/config/certify-conformance.properties:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8090/v1/certify/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 60s
+    networks: [icg]
+    logging: *logging
+
+  # --------------------------------------------------------------------------------
+  # Inji Verify 1.0 (OID4VP verifier)
+  # --------------------------------------------------------------------------------
+  verify-db:
+    profiles: [verify]
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inji_verify
+    volumes:
+      - verify-db:/var/lib/postgresql/data
+      - ./verify/initdb:/docker-entrypoint-initdb.d:ro
+      - ${INJI_VERIFY_DB_SCRIPTS_DIR}:/upstream-db-scripts:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+    networks: [icg]
+    logging: *logging
+
+  verify-service:
+    profiles: [verify]
+    image: ${INJI_VERIFY_IMAGE:-injistack/inji-verify-service:1.0.0-alpha.1}
+    user: root
+    ports:
+      - "8080:8080"
+    environment:
+      active_profile_env: default
+      VERIFY_CONTEXT_PATH: /v1/verify
+      DATABASE_HOST: verify-db
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: inji_verify
+      DATABASE_SCHEMA: verify
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      INJI_VP_REQUEST_LONG_POLLING_TIMEOUT: "55000"
+      # response_uri the suite's wallet posts to; must match the redirect_uri client id.
+      INJI_VP_SUBMISSION_BASE_URL: https://verify.inji.test/v1/verify
+      INJI_DID_VERIFY_URI: did:web:verify.inji.test:v1:verify
+      INJI_DID_VERIFY_PUBLIC_KEY_URI: did:web:verify.inji.test:v1:verify#key-0
+      INJI_KEYSTORE_FILE_PASS: mosip
+      INJI_VERIFY_REDIRECT_URI: https://verify.inji.test
+      INJI_VERIFY_CLAIMS_WITH_META_DATA: _sd,_sd_alg,iss,cnf,sub,aud,exp,nbf,iat,cti
+    depends_on:
+      verify-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/v1/verify/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+      start_period: 40s
+    networks: [icg]
+    logging: *logging

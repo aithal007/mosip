@@ -1,0 +1,8 @@
+{
+    "alias": "set-by-harness",
+    "description": "set-by-harness",
+    "credential": {
+        "signing_jwk": {vp-signing-jwk.json}
+    },
+    "waitTimeoutSeconds": 10
+}

@@ -1,0 +1,98 @@
+{
+  "component": "certify",
+  "displayName": "Inji Certify (OID4VCI issuer)",
+  "benchmark": {
+    "expectedFailures": "conformance/benchmark/certify/expected-failures.json",
+    "expectedSkips": "conformance/benchmark/certify/expected-skips.json"
+  },
+  "shims": [
+    {
+      "name": "authorization_endpoint added to OAuth authorization server metadata",
+      "where": "deploy/gateway/nginx.conf",
+      "reason": "Inji Certify advertises grant type authorization_code without authorization_endpoint (RFC 8414 section 2). The suite aborts all issuance modules at setup, hiding every other result.",
+      "issue": "https://github.com/inji/inji-certify/issues/941"
+    },
+    {
+      "name": "credential issuer metadata served at the path-inserted well-known URL",
+      "where": "deploy/gateway/nginx.conf",
+      "reason": "OID4VCI 1.0 section 12.2.2 metadata location for issuers with a path component.",
+      "issue": "https://github.com/inji/inji-certify/issues/967"
+    }
+  ],
+  "plans": [
+    {
+      "id": "vci-sdjwt-preauth",
+      "gating": true,
+      "description": "OID4VCI 1.0 Final, SD-JWT VC, issuer-initiated pre-authorized code flow using Inji Certify's built-in authorization server (no eSignet dependency).",
+      "planName": "oid4vci-1_0-issuer-test-plan",
+      "variant": {
+        "authorization_request_type": "simple",
+        "client_auth_type": "private_key_jwt",
+        "fapi_request_method": "unsigned",
+        "sender_constrain": "dpop",
+        "vci_authorization_code_flow_variant": "issuer_initiated",
+        "vci_grant_type": "pre_authorization_code",
+        "fapi_profile": "vci",
+        "credential_format": "sd_jwt_vc",
+        "vci_credential_encryption": "plain",
+        "openid": "plain_oauth",
+        "fapi_response_mode": "plain_response"
+      },
+      "modules": [
+        "oid4vci-1_0-issuer-metadata-test",
+        "oid4vci-1_0-issuer-metadata-test-signed",
+        "oid4vci-1_0-issuer-happy-flow",
+        "oid4vci-1_0-issuer-happy-flow-additional-requests",
+        "oid4vci-1_0-issuer-fail-invalid-nonce",
+        "oid4vci-1_0-issuer-fail-invalid-jwt-proof-signature",
+        "oid4vci-1_0-issuer-fail-missing-proof",
+        "oid4vci-1_0-issuer-fail-unknown-credential-configuration",
+        "oid4vci-1_0-issuer-fail-on-access-token-in-query"
+      ],
+      "config": "conformance/configs/certify/issuer-sdjwt-preauth.json"
+    }
+  ],
+  "readiness": [
+    {
+      "id": "vci-haip",
+      "description": "The certifiable OID4VCI HAIP profile: authorization code flow with PAR, DPoP sender-constrained tokens and OAuth client attestation.",
+      "planName": "oid4vci-1_0-issuer-haip-test-plan",
+      "variant": {
+        "credential_format": "sd_jwt_vc",
+        "vci_authorization_code_flow_variant": "wallet_initiated"
+      },
+      "requires": [
+        {
+          "name": "DPoP proofs validated and enforced on token and credential endpoints",
+          "supported": false,
+          "issue": "https://github.com/inji/inji-certify/issues/963",
+          "note": "1.0.0-alpha.1 accepts the DPoP-variant flow; DPoP proof validation (DpopProofValidator) landed on develop afterwards."
+        },
+        {
+          "name": "client_auth_type=client_attestation (OAuth attestation-based client auth)",
+          "supported": false,
+          "issue": "",
+          "note": "Not implemented in Inji Certify or eSignet as of 1.0.0-alpha.1."
+        },
+        {
+          "name": "authorization_code grant with PAR against the configured AS",
+          "supported": false,
+          "issue": "https://github.com/mosip/esignet/issues/2234",
+          "note": "Depends on eSignet; PAR client assertion currently fails in the suite."
+        },
+        {
+          "name": "Credential issuer metadata at the path-inserted well-known URL",
+          "supported": false,
+          "issue": "https://github.com/inji/inji-certify/issues/967",
+          "note": "The harness gateway serves a compatibility route; the product fix is tracked upstream."
+        },
+        {
+          "name": "Nonce endpoint and jwt proof type (OID4VCI 1.0 Final)",
+          "supported": true,
+          "issue": "",
+          "note": "Available since Inji Certify 1.0.0-alpha.1."
+        }
+      ]
+    }
+  ]
+}

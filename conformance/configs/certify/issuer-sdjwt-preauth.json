@@ -1,0 +1,29 @@
+{
+    "alias": "set-by-harness",
+    "description": "set-by-harness",
+    "vci": {
+        "credential_issuer_url": "${CERTIFY_ISSUER}",
+        "credential_configuration_id": "InjiConformanceSdJwt",
+        "static_tx_code": "482915"
+    },
+    "client": {
+        "client_id": "inji-conformance-wallet",
+        "jwks": {
+            "keys": [
+                {
+                    "kty": "EC",
+                    "d": "C9AWp9_vYfHj-ckdYAo0aYk-ZGXOPwoKJEqmYGlqUGI",
+                    "use": "sig",
+                    "crv": "P-256",
+                    "kid": "vci-example-key-1",
+                    "x": "yHNp8QgNiVSxSxIH_n_nH23dpUDlNhbgvLKSrjK1hDs",
+                    "y": "3_rlpW_FXqghp8dKPpkjfvbfACQQFLFZwJXxOr319Ac",
+                    "alg": "ES256"
+                }
+            ]
+        }
+    },
+    "options": {
+        "browsercontrol_css_enable": false
+    }
+}
