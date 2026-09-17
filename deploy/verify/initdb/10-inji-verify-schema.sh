@@ -7,7 +7,7 @@
 set -eu
 
 DDL_DIR=/upstream-db-scripts/ddl
-for f in verify-authorization_request_details.sql verify-presentation_definition.sql verify-vp_submission.sql verify-vc_submission.sql; do
+for f in verify-authorization_request_details.sql verify-vp_submission.sql verify-vc_submission.sql; do
   [ -f "$DDL_DIR/$f" ] || { echo "missing $DDL_DIR/$f" >&2; exit 1; }
 done
 
@@ -16,7 +16,6 @@ CREATE SCHEMA IF NOT EXISTS verify;
 ALTER DATABASE "$POSTGRES_DB" SET search_path TO verify,pg_catalog,public;
 SET search_path TO verify;
 \i $DDL_DIR/verify-authorization_request_details.sql
-\i $DDL_DIR/verify-presentation_definition.sql
 \i $DDL_DIR/verify-vp_submission.sql
 \i $DDL_DIR/verify-vc_submission.sql
 SQL

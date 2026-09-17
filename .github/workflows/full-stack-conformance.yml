@@ -51,6 +51,9 @@ jobs:
     needs: unit
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
+      checks: write # publish-unit-test-result-action creates a check run per component
     strategy:
       fail-fast: false
       matrix:

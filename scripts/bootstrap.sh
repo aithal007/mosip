@@ -9,22 +9,28 @@ UPSTREAM="$ROOT/upstream"
 mkdir -p "$UPSTREAM"
 
 checkout() { # <dir> <repo-url> <ref> [sparse paths...]
+  # $ref is normally a pinned commit SHA (see deploy/versions.env), but a branch or tag
+  # name works too: `git fetch origin <ref>` resolves any of the three the same way, so
+  # pinning to a commit doesn't need `clone --branch`, which only accepts branch/tag names.
   local dir="$1" url="$2" ref="$3"; shift 3
   if [[ ! -d "$dir/.git" ]]; then
     echo "==> cloning $url ($ref)"
-    git -c core.longpaths=true clone --quiet --depth 1 --filter=blob:none --sparse --branch "$ref" "$url" "$dir"
+    git -c core.longpaths=true clone --quiet --filter=blob:none --sparse --no-checkout "$url" "$dir"
     git -C "$dir" sparse-checkout set "$@"
+    git -C "$dir" fetch --quiet --depth 1 origin "$ref"
+    git -C "$dir" checkout --quiet FETCH_HEAD
   else
     local current
-    current="$(git -C "$dir" describe --tags --exact-match 2>/dev/null || git -C "$dir" rev-parse --abbrev-ref HEAD)"
-    if [[ "$current" != "$ref" ]]; then
-      echo "==> updating $dir to $ref"
-      git -C "$dir" fetch --quiet --depth 1 origin "$ref"
-      git -C "$dir" checkout --quiet FETCH_HEAD
-    fi
-    # Full clones (made by hand) keep all files; sparse ones get the paths we need.
+    current="$(git -C "$dir" rev-parse HEAD)"
     if git -C "$dir" config --get core.sparseCheckout >/dev/null 2>&1; then
       git -C "$dir" sparse-checkout set "$@"
+    fi
+    git -C "$dir" fetch --quiet --depth 1 origin "$ref"
+    local wanted
+    wanted="$(git -C "$dir" rev-parse FETCH_HEAD)"
+    if [[ "$current" != "$wanted" ]]; then
+      echo "==> updating $dir to $ref ($wanted)"
+      git -C "$dir" checkout --quiet FETCH_HEAD
     fi
   fi
 }
