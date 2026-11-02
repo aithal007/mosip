@@ -3,6 +3,9 @@ upstream/
 
 # Run outputs (a curated sample lives in docs/sample-run/)
 results/
+demo-output/
+site/demo/
+verify-probe.json
 *.log
 
 # Generated test TLS material
