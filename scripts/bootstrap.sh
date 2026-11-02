@@ -3,8 +3,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck disable=SC1091
-set -a; source "$ROOT/deploy/versions.env"; set +a
+set -a
+# shellcheck disable=SC1091 # pinned versions, intentionally unscoped
+source "$ROOT/deploy/versions.env"
+set +a
 UPSTREAM="$ROOT/upstream"
 mkdir -p "$UPSTREAM"
 
@@ -25,7 +27,13 @@ checkout() { # <dir> <repo-url> <ref> [sparse paths...]
     if git -C "$dir" config --get core.sparseCheckout >/dev/null 2>&1; then
       git -C "$dir" sparse-checkout set "$@"
     fi
-    git -C "$dir" fetch --quiet --depth 1 origin "$ref"
+    if [[ "$current" == "$ref" ]]; then
+      return 0 # already at the pinned commit: no network needed
+    fi
+    if ! git -C "$dir" fetch --quiet --depth 1 origin "$ref"; then
+      echo "==> warning: cannot reach $url; using cached $dir at $current" >&2
+      return 0
+    fi
     local wanted
     wanted="$(git -C "$dir" rev-parse FETCH_HEAD)"
     if [[ "$current" != "$wanted" ]]; then

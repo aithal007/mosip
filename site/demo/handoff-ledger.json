@@ -1,0 +1,514 @@
+{
+  "ldk77jZfc54vcQk": {
+    "lastHandledUpdate": "2026-09-16T19:00:52.250448455Z",
+    "testName": "oid4vci-1_0-issuer-happy-flow",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/0fb16e47-3971-4e38-a6c7-b4f3dd3226a8",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/0fb16e47-3971-4e38-a6c7-b4f3dd3226a8",
+        "suiteHttpStatus": 400,
+        "at": 1789585252.5495348
+      }
+    ]
+  },
+  "vdJOKODghmzVVsx": {
+    "lastHandledUpdate": "2026-09-16T19:00:52.720250028Z",
+    "testName": "oid4vp-1final-verifier-happy-flow",
+    "injiTransactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+    "injiRequestId": "req_ba62a1db-d449-41d4-84b9-49b75be90745",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585252.7286115
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "c79BFIgWOr",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+        "detail": {
+          "transactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        },
+        "at": 1789585254.5381963
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "c79BFIgWOr",
+      "expected": "SUCCESS",
+      "actual": "SUCCESS",
+      "matched": true,
+      "transactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+      "detail": {
+        "transactionId": "txn_d1c0d09b-01a7-441b-9067-aff423b55c32",
+        "vpResultStatus": "SUCCESS",
+        "vcResults": [
+          {
+            "verificationStatus": "SUCCESS"
+          }
+        ]
+      }
+    }
+  },
+  "mk61k8Lub0jd5Kr": {
+    "lastHandledUpdate": "2026-09-16T19:00:52.655727075Z",
+    "testName": "oid4vci-1_0-issuer-happy-flow-additional-requests",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/528d699a-9b00-424f-b222-ccc9a35b5274",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/528d699a-9b00-424f-b222-ccc9a35b5274",
+        "suiteHttpStatus": 400,
+        "at": 1789585254.390868
+      }
+    ]
+  },
+  "v91vMleXPNraScw": {
+    "lastHandledUpdate": "2026-09-16T19:00:56.036188214Z",
+    "testName": "oid4vp-1final-verifier-minimal-cnf-jwk",
+    "injiTransactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+    "injiRequestId": "req_8134b2da-37d2-470c-8cb0-874737b1408d",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585256.0448897
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "W0p0RjDeSu",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+        "detail": {
+          "transactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        },
+        "at": 1789585258.0689597
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "W0p0RjDeSu",
+      "expected": "SUCCESS",
+      "actual": "SUCCESS",
+      "matched": true,
+      "transactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+      "detail": {
+        "transactionId": "txn_a3274b99-8d51-425a-bbc7-4c3806f3f984",
+        "vpResultStatus": "SUCCESS",
+        "vcResults": [
+          {
+            "verificationStatus": "SUCCESS"
+          }
+        ]
+      }
+    }
+  },
+  "5PMxBG5ldc6RRTU": {
+    "lastHandledUpdate": "2026-09-16T19:00:54.508369829Z",
+    "testName": "oid4vci-1_0-issuer-fail-invalid-nonce",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/8d65623c-4c28-48ea-a086-ffcfc9287887",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/8d65623c-4c28-48ea-a086-ffcfc9287887",
+        "suiteHttpStatus": 200,
+        "at": 1789585256.3445516
+      }
+    ]
+  },
+  "EGAFH59RoW13ogq": {
+    "lastHandledUpdate": "2026-09-16T19:00:56.456989029Z",
+    "testName": "oid4vci-1_0-issuer-fail-invalid-jwt-proof-signature",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/14838868-ee5c-45cc-9bb2-57fcc167257e",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/14838868-ee5c-45cc-9bb2-57fcc167257e",
+        "suiteHttpStatus": 200,
+        "at": 1789585257.9463508
+      }
+    ]
+  },
+  "OBi3Xca4yy9jxz4": {
+    "lastHandledUpdate": "2026-09-16T19:00:59.523262839Z",
+    "testName": "oid4vp-1final-verifier-request-uri-method-post",
+    "injiTransactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+    "injiRequestId": "req_54b48f02-d5dc-42c7-b56d-e18d9ea57dd1",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585259.5291648
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "ghB8Js9DT5",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+        "detail": {
+          "transactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        },
+        "at": 1789585261.4836948
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "ghB8Js9DT5",
+      "expected": "SUCCESS",
+      "actual": "SUCCESS",
+      "matched": true,
+      "transactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+      "detail": {
+        "transactionId": "txn_d361ec34-b86d-4a17-9d46-e57f1760181f",
+        "vpResultStatus": "SUCCESS",
+        "vcResults": [
+          {
+            "verificationStatus": "SUCCESS"
+          }
+        ]
+      }
+    }
+  },
+  "AqHefHMqjlFBKmW": {
+    "lastHandledUpdate": "2026-09-16T19:00:58.063358857Z",
+    "testName": "oid4vci-1_0-issuer-fail-missing-proof",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/e9129007-1cd5-4226-a6b7-12a94bd16ce9",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/e9129007-1cd5-4226-a6b7-12a94bd16ce9",
+        "suiteHttpStatus": 200,
+        "at": 1789585259.7879424
+      }
+    ]
+  },
+  "y64TVua4IY39RCs": {
+    "lastHandledUpdate": "2026-09-16T19:00:59.901730122Z",
+    "testName": "oid4vci-1_0-issuer-fail-unknown-credential-configuration",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/353df7ed-1a13-464f-b06f-28876c78f49e",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/353df7ed-1a13-464f-b06f-28876c78f49e",
+        "suiteHttpStatus": 400,
+        "at": 1789585261.3516493
+      }
+    ]
+  },
+  "kCqDypTwXEpYKJ9": {
+    "lastHandledUpdate": "2026-09-16T19:01:03.019151683Z",
+    "testName": "oid4vp-1final-verifier-request-uri-fetched-twice",
+    "injiTransactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+    "injiRequestId": "req_2c393f78-2b6c-4236-bd15-c5b2916d59f5",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585263.0263832
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "f5uSRVrYoi",
+        "expected": "SUCCESS",
+        "actual": "SUCCESS",
+        "matched": true,
+        "transactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+        "detail": {
+          "transactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+          "vpResultStatus": "SUCCESS",
+          "vcResults": [
+            {
+              "verificationStatus": "SUCCESS"
+            }
+          ]
+        },
+        "at": 1789585264.7678258
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "f5uSRVrYoi",
+      "expected": "SUCCESS",
+      "actual": "SUCCESS",
+      "matched": true,
+      "transactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+      "detail": {
+        "transactionId": "txn_5a5ba974-178a-4661-a619-940e7b917ae2",
+        "vpResultStatus": "SUCCESS",
+        "vcResults": [
+          {
+            "verificationStatus": "SUCCESS"
+          }
+        ]
+      }
+    }
+  },
+  "XKOQPhgbX6h8b7Q": {
+    "lastHandledUpdate": "2026-09-16T19:01:01.459258134Z",
+    "testName": "oid4vci-1_0-issuer-fail-on-access-token-in-query",
+    "offersDelivered": 1,
+    "lastOfferUri": "https://certify.inji.test/v1/certify/credential-offer-data/47c0e7d4-98da-45b9-b96e-32ff2cf82b51",
+    "events": [
+      {
+        "action": "credential-offer-delivered",
+        "offerUri": "https://certify.inji.test/v1/certify/credential-offer-data/47c0e7d4-98da-45b9-b96e-32ff2cf82b51",
+        "suiteHttpStatus": 400,
+        "at": 1789585263.2992384
+      }
+    ]
+  },
+  "AIDSvrFHXaeM9U4": {
+    "lastHandledUpdate": "2026-09-16T19:01:07.601509582Z",
+    "testName": "oid4vp-1final-verifier-invalid-kb-jwt-signature",
+    "injiTransactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+    "injiRequestId": "req_87f73756-b8aa-43a6-a25b-1176d20d4a4e",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585267.6073961
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "eJg1efFc1h",
+        "expected": "FAILED",
+        "actual": "FAILED",
+        "matched": true,
+        "transactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+        "detail": {
+          "transactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+          "vpResultStatus": "FAILED",
+          "vcResults": [
+            {
+              "verificationStatus": "INVALID"
+            }
+          ]
+        },
+        "at": 1789585269.0229342
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "eJg1efFc1h",
+      "expected": "FAILED",
+      "actual": "FAILED",
+      "matched": true,
+      "transactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+      "detail": {
+        "transactionId": "txn_08b72481-1ab8-4aee-b85d-4bce6b0bf6a5",
+        "vpResultStatus": "FAILED",
+        "vcResults": [
+          {
+            "verificationStatus": "INVALID"
+          }
+        ]
+      }
+    }
+  },
+  "JCqP6FewdehnqUf": {
+    "lastHandledUpdate": "2026-09-16T19:01:11.754135129Z",
+    "testName": "oid4vp-1final-verifier-invalid-credential-signature",
+    "injiTransactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+    "injiRequestId": "req_f9d22e79-c147-4cf8-b5fd-0a56ff72bdfb",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585271.762939
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "PvybAlf4lv",
+        "expected": "FAILED",
+        "actual": "FAILED",
+        "matched": true,
+        "transactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+        "detail": {
+          "transactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+          "vpResultStatus": "FAILED",
+          "vcResults": [
+            {
+              "verificationStatus": "INVALID"
+            }
+          ]
+        },
+        "at": 1789585273.167121
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "PvybAlf4lv",
+      "expected": "FAILED",
+      "actual": "FAILED",
+      "matched": true,
+      "transactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+      "detail": {
+        "transactionId": "txn_eabebee8-a360-49c5-8714-2cce52ce7c97",
+        "vpResultStatus": "FAILED",
+        "vcResults": [
+          {
+            "verificationStatus": "INVALID"
+          }
+        ]
+      }
+    }
+  },
+  "uMDZFhQqfAoVy3U": {
+    "lastHandledUpdate": "2026-09-16T19:01:16.145121783Z",
+    "testName": "oid4vp-1final-verifier-invalid-sd-hash",
+    "injiTransactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+    "injiRequestId": "req_19ee692b-e7ef-4d28-badf-3ccea53e4e43",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585276.1541026
+      },
+      {
+        "action": "review-evidence-uploaded",
+        "placeholder": "irnLjIsq21",
+        "expected": "FAILED",
+        "actual": "FAILED",
+        "matched": true,
+        "transactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+        "detail": {
+          "transactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+          "vpResultStatus": "FAILED",
+          "vcResults": [
+            {
+              "verificationStatus": "INVALID"
+            }
+          ]
+        },
+        "at": 1789585277.5990276
+      }
+    ],
+    "reviewEvidence": {
+      "placeholder": "irnLjIsq21",
+      "expected": "FAILED",
+      "actual": "FAILED",
+      "matched": true,
+      "transactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+      "detail": {
+        "transactionId": "txn_8a601154-8a22-4062-ac91-2619353fb61f",
+        "vpResultStatus": "FAILED",
+        "vcResults": [
+          {
+            "verificationStatus": "INVALID"
+          }
+        ]
+      }
+    }
+  },
+  "qQxx1ushLDBKHIn": {
+    "lastHandledUpdate": "2026-09-16T19:01:19.199826526Z",
+    "testName": "oid4vp-1final-verifier-invalid-kb-jwt-nonce",
+    "injiTransactionId": "txn_040beb13-b1c2-44f3-9710-a7a14dc9692a",
+    "injiRequestId": "req_2cff9fe2-c4cb-4623-bcd9-4fb124587a3b",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585280.5320117
+      }
+    ]
+  },
+  "88tobS2Nt4al2j2": {
+    "lastHandledUpdate": "2026-09-16T19:01:20.571409196Z",
+    "testName": "oid4vp-1final-verifier-invalid-kb-jwt-aud",
+    "injiTransactionId": "txn_1a1b64a5-324e-4a49-8db0-ec032a97273e",
+    "injiRequestId": "req_5db07903-3229-4455-9e16-92051d13ab34",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585282.0752506
+      }
+    ]
+  },
+  "e56VQPNKtPoBgNt": {
+    "lastHandledUpdate": "2026-09-16T19:01:22.110440837Z",
+    "testName": "oid4vp-1final-verifier-kb-jwt-iat-in-past",
+    "injiTransactionId": "txn_f18bc4bf-4d19-4d4e-b061-55f31689246a",
+    "injiRequestId": "req_08f94c93-ddb4-4f7d-9c82-507f8d605ad1",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585283.5054333
+      }
+    ]
+  },
+  "ECRE9T3cwGUCfPH": {
+    "lastHandledUpdate": "2026-09-16T19:01:23.536406338Z",
+    "testName": "oid4vp-1final-verifier-kb-jwt-iat-in-future",
+    "injiTransactionId": "txn_b261731c-0732-4f07-a071-204ada983715",
+    "injiRequestId": "req_8e319b03-90ac-4cd2-af24-c806a4b7ec5e",
+    "clientId": "redirect_uri:https://verify.inji.test/v1/verify/v2/vp-submission/direct-post",
+    "authorizationRequestDelivered": true,
+    "events": [
+      {
+        "action": "authorization-request-delivered",
+        "suiteHttpStatus": 200,
+        "redirect": "",
+        "at": 1789585285.0200799
+      }
+    ]
+  }
+}

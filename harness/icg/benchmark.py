@@ -45,6 +45,15 @@ class Benchmark:
 
         return Benchmark(read(failures_file), read(skips_file))
 
+    def validate(self) -> list[str]:
+        """Problems that make the benchmark untrustworthy (missing issue links)."""
+        problems = []
+        for kind, entries in (("expected-failures", self.expected_failures), ("expected-skips", self.expected_skips)):
+            for entry in entries:
+                if not str(entry.get("issue", "")).startswith("http"):
+                    problems.append(f"{kind}: {entry.get('test-name')} / {entry.get('condition', '-')} has no issue link")
+        return problems
+
     def entries_for(self, entries: list[dict[str, Any]], module: ModuleResult, config_file: str) -> list[dict[str, Any]]:
         return [e for e in entries if _matches(e, module.module_name, config_file, module.variant)]
 
@@ -118,10 +127,11 @@ def classify(
         return set_verdict(Verdict.SKIP, reason, expected_skips)
 
     if result == SuiteResult.FAILED.value:
+        if unexpected:
+            # An expected skip must never hide a new failing condition.
+            return set_verdict(Verdict.FAIL, "unexpected " + "; ".join(unexpected))
         if expected_skips:
             return set_verdict(Verdict.KNOWN_ISSUE, "failed; module listed in expected skips", expected_skips)
-        if unexpected:
-            return set_verdict(Verdict.FAIL, "unexpected " + "; ".join(unexpected))
         if matched:
             return set_verdict(Verdict.KNOWN_ISSUE, f"{len(matched)} failure(s) match the benchmark", matched)
         return set_verdict(Verdict.FAIL, "suite result FAILED without a matching benchmark entry")

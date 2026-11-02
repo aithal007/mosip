@@ -97,6 +97,24 @@ def _benchmark_for_upstream(source: Path, target: Path) -> Path:
     return target
 
 
+def _untested_modules_args() -> list[str]:
+    """Opt-in: ``ICG_SHOW_UNTESTED_MODULES=<module-family>`` makes the upstream script fail
+    when the suite offers modules (e.g. after an upgrade) that no plan manifest selects."""
+    family = os.environ.get("ICG_SHOW_UNTESTED_MODULES", "").strip()
+    return ["--show-untested-test-modules", family] if family else []
+
+
+def _kill_tree(process: subprocess.Popen) -> None:
+    """Kill run-test-plan.py and anything it spawned."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(process.pid)], capture_output=True, check=False)
+        else:
+            os.killpg(os.getpgid(process.pid), 9)
+    except (OSError, ProcessLookupError):
+        process.kill()
+
+
 def run_component(
     manifest: ComponentManifest,
     settings: Settings,
@@ -146,6 +164,7 @@ def run_component(
         "--expected-failures-file", str(failures),
         "--expected-skips-file", str(skips),
         "--verbose",
+        *_untested_modules_args(),
         *args,
     ]
     env = dict(os.environ)
@@ -175,6 +194,7 @@ def run_component(
         process = subprocess.Popen(
             command, cwd=scripts, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace",
+            start_new_session=(os.name != "nt"),
         )
 
         def pump() -> None:
@@ -190,7 +210,7 @@ def run_component(
         try:
             exit_code = process.wait(timeout=timeout_seconds)
         except subprocess.TimeoutExpired:
-            process.kill()
+            _kill_tree(process)
             exit_code = -1
             log.error("[%s] run-test-plan.py exceeded %ss and was killed", component, timeout_seconds)
         reader.join(timeout=10)

@@ -49,7 +49,7 @@ class CertifyHandoff(HandoffAdapter):
         self._http = httpx.Client(timeout=30, verify=False)
         self._offer_template: dict[str, Any] = json.loads((offer_file or DEFAULT_OFFER_FILE).read_text(encoding="utf-8"))
 
-    def handle_waiting(self, ctx: HandoffContext) -> None:
+    def handle_waiting(self, ctx: HandoffContext) -> bool | None:
         offer_endpoint = ctx.exposed.get("credential_offer_endpoint")
         tx_code_endpoint = ctx.exposed.get("tx_code_endpoint")
 
@@ -57,6 +57,9 @@ class CertifyHandoff(HandoffAdapter):
             self._deliver_tx_code(ctx, tx_code_endpoint)
         elif offer_endpoint:
             self._deliver_offer(ctx, offer_endpoint)
+        else:
+            return False
+        return None
 
     def _deliver_offer(self, ctx: HandoffContext, offer_endpoint: str) -> None:
         offer = self._create_offer()

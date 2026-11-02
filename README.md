@@ -94,7 +94,23 @@ testrig/injicertify|injiverify/ OpenIDConformanceTest classes + TestNG suite fil
 docs/                           architecture, handoff, benchmark, API, integration, certification, troubleshooting
 ```
 
+## Negative probes
+
+`python -m icg probe [--component certify|verify]` sends deliberately bad requests that the suite does not cover and asserts Inji refuses them: an offer for an unknown credential configuration, a replayed pre-authorized code, a wrong `tx_code`, a garbage `vp_token`, and the path-inserted metadata URL ([inji-certify#967](https://github.com/inji/inji-certify/issues/967)). Probes are reported as JSON, never feed the OpenID gate, and return `SKIP` when a request cannot run. They have unit tests against a mocked server but have not been run against a live Inji stack.
+
+**Live probe status (2 Nov 2026):** run against a live stack after a passing combined run — see [docs/FINDINGS.md](docs/FINDINGS.md) for the results: one new negative finding on Inji Certify (an offer for an unknown credential configuration is accepted with HTTP 200), the Verify `garbage vp_token` probe passing, and the SD-JWT corpus `inconclusive` pending a trusted-issuer setting in Inji Verify (as predicted in `docs/NEXT_STEPS.md`).
+
+### SD-JWT tamper corpus and probe self-test
+
+Against Inji Verify, `icg probe` also sends 15 tampered SD-JWT presentations (altered, extra or duplicated disclosures, missing or wrong key-binding JWT, wrong nonce, audience, `sd_hash` or `typ`, `alg=none`, embedded `jwk`, expired credential, weak `_sd_alg`, claim collision), each tied to its RFC or CVE in `harness/icg/sdjwt_corpus.py`. The untampered control must be accepted first: if Inji does not trust the generated issuer key, the run reports `inconclusive` instead of a false pass.
+
+`python -m icg selftest` needs no Docker. It checks the probes themselves with mutation testing: a strict reference verifier (`refverifier.py`) rejects every tampered case, then each of its 12 rules is switched off in turn and the probes must notice. Current score: 12/12 mutants caught. The first version of this test exposed a blind spot in its own reference verifier, which is the point of running it.
+
+Set `ICG_SHOW_UNTESTED_MODULES=<family>` to make the upstream runner fail when the suite offers modules that no plan manifest selects.
+
 ## Documentation
+
+**Live demo & published artifacts:** [aithal007.github.io/mosip](https://aithal007.github.io/mosip/) — landing page, architecture, verified results, sample consolidated report, handoff ledger.
 
 - [Architecture](docs/ARCHITECTURE.md): components, data flow and design decisions
 - [Handoff handling](docs/HANDOFF.md): how the suite and each Inji component are joined up without a human
@@ -108,7 +124,7 @@ docs/                           architecture, handoff, benchmark, API, integrati
 ## Tests
 
 ```bash
-cd harness && python -m pytest -q                         # 31 unit tests, no Docker needed
+cd harness && python -m pytest -q                         # 39 unit tests, no Docker needed
 cd testrig/conformance-bridge && mvn -q verify             # Java bridge tests (JDK 21)
 ```
 
@@ -129,8 +145,9 @@ cd testrig/conformance-bridge && mvn -q verify             # Java bridge tests (
 ## Limitations / not done
 
 - The eSignet-backed authorization-code flow for Certify is out of scope; only the pre-authorized-code SD-JWT VC flow is exercised.
-- The GitHub Actions workflow has not been run on `github.com` yet (no remote CI history); it is exercised locally via the same `run-conformance.sh` it calls.
+- Probes have unit tests against a mocked server and a mutation self-test, but a full probe run against a live Inji stack is still pending on the maintainer machine (in progress).
 - `testrig/Dockerfile.conformance-layer` has not been built and pushed as an image; the api-test modules were compiled and verified locally instead (see `docs/TESTRIG_INTEGRATION.md`).
+- A handoff-agent timing race observed only on a Windows host interrupts all `oid4vci-1_0-issuer-fail-*` modules locally (CI passes); tracked with evidence in [aithal007/mosip#2](https://github.com/aithal007/mosip/issues/2).
 
 ## License
 

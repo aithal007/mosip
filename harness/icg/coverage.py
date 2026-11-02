@@ -26,6 +26,7 @@ class ClauseCoverage:
     modules: set[str] = field(default_factory=set)
     failing_modules: set[str] = field(default_factory=set)
     warning_modules: set[str] = field(default_factory=set)
+    review_modules: set[str] = field(default_factory=set)
 
     @property
     def state(self) -> str:
@@ -33,6 +34,9 @@ class ClauseCoverage:
             return "failing"
         if self.warning_modules:
             return "warning"
+        if self.review_modules and self.review_modules == self.modules:
+            # Only touched by REVIEW results: passed on automated evidence, not by the suite alone.
+            return "review"
         return "passing"
 
 
@@ -58,6 +62,8 @@ def build_coverage(run: RunResult) -> list[ClauseCoverage]:
             clause = clauses.setdefault(requirement, ClauseCoverage(requirement, spec, section))
             clause.components.add(module.component)
             clause.modules.add(label)
+            if module.suite_result == "REVIEW":
+                clause.review_modules.add(label)
             if requirement in failing:
                 clause.failing_modules.add(label)
             elif requirement in warning:
@@ -66,7 +72,7 @@ def build_coverage(run: RunResult) -> list[ClauseCoverage]:
 
 
 def coverage_by_spec(clauses: list[ClauseCoverage]) -> dict[str, dict[str, int]]:
-    summary: dict[str, dict[str, int]] = defaultdict(lambda: {"passing": 0, "warning": 0, "failing": 0})
+    summary: dict[str, dict[str, int]] = defaultdict(lambda: {"passing": 0, "review": 0, "warning": 0, "failing": 0})
     for clause in clauses:
         summary[clause.spec][clause.state] += 1
     return dict(sorted(summary.items()))

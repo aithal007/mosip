@@ -55,6 +55,11 @@ public final class ConformanceRunConfig {
         this.seedCertify = b.seedCertify;
     }
 
+    /** python3 is the Microsoft Store stub on Windows; the launcher there is "python". */
+    private static String defaultPython() {
+        return System.getProperty("os.name", "").toLowerCase().contains("win") ? "python" : "python3";
+    }
+
     /**
      * @param component    "certify" or "verify"
      * @param adminBaseUrl the component URL the testrig already targets, e.g. env.endpoint + "/v1/verify"
@@ -70,7 +75,7 @@ public final class ConformanceRunConfig {
                 .adminUrl(adminBaseUrl)
                 .publicUrl(get.apply(KEY_PUBLIC_BASE_URL).isEmpty() ? adminBaseUrl : get.apply(KEY_PUBLIC_BASE_URL))
                 .conformanceServer(get.apply(KEY_SERVER))
-                .python(get.apply(KEY_PYTHON).isEmpty() ? "python3" : get.apply(KEY_PYTHON))
+                .python(get.apply(KEY_PYTHON).isEmpty() ? defaultPython() : get.apply(KEY_PYTHON))
                 .reviewPolicy(get.apply(KEY_REVIEW_POLICY))
                 .seedCertify(!"no".equalsIgnoreCase(get.apply(KEY_SEED)));
         if (!get.apply(KEY_HARNESS_HOME).isEmpty()) {

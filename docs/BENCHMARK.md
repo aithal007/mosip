@@ -60,7 +60,7 @@ Harness pseudo-conditions:
 
 ## Run diff
 
-Every run is compared with `results/baseline-results.json`, if present. The baseline is updated with `--update-baseline` when the gate passes, and CI keeps it in the Actions cache.
+Every run is compared with `results/baseline-<components>.json` (for example `baseline-certify-verify.json`), if present. The baseline is updated with `--update-baseline` when the gate passes, and CI keeps it in the Actions cache.
 
 `python -m icg diff A.json B.json --fail-on-regression` reports:
 - **Regressions:** a verdict became blocking, or new failing conditions appeared.

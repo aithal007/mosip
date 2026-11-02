@@ -21,8 +21,9 @@ COMPONENTS=()
 ICG_ARGS=()
 START=1
 DOWN=0
+COMBINED=0
 
-usage() { sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -30,9 +31,11 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { usage; exit 2; }
       case "$2" in certify|verify) COMPONENTS+=("$2") ;; *) echo "unknown component: $2" >&2; exit 2 ;; esac
       shift 2 ;;
-    --combined) COMPONENTS=(certify verify); ICG_ARGS+=(--combined); shift ;;
+    --combined) COMPONENTS=(certify verify); COMBINED=1; shift ;;
     --parallel|--readiness|--update-baseline) ICG_ARGS+=("$1"); shift ;;
-    --out) ICG_ARGS+=(--out "$2"); shift 2 ;;
+    --out)
+      [[ $# -ge 2 ]] || { echo "--out needs a directory" >&2; exit 2; }
+      ICG_ARGS+=(--out "$2"); shift 2 ;;
     --no-up) START=0; shift ;;
     --down) DOWN=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -40,11 +43,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ ${#COMPONENTS[@]} -gt 0 ]] || { usage; exit 2; }
-if [[ ! " ${ICG_ARGS[*]-} " == *" --combined "* ]]; then
+if [[ $COMBINED -eq 1 ]]; then
+  ICG_ARGS+=(--combined)
+else
   for c in "${COMPONENTS[@]}"; do ICG_ARGS+=(--component "$c"); done
 fi
 
-PYTHON="${PYTHON:-$(command -v python3 || command -v python)}"
+# `python3` can be the Microsoft Store stub on Windows (Git Bash), so probe each candidate.
+pick_python() {
+  local candidate
+  for candidate in python3 python py; do
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 10))' >/dev/null 2>&1; then
+      echo "$candidate"; return 0
+    fi
+  done
+  return 1
+}
+PYTHON="${PYTHON:-$(pick_python)}" || { echo "Python 3.10+ not found (set PYTHON=...)" >&2; exit 2; }
 "$ROOT/scripts/bootstrap.sh"
 
 if ! "$PYTHON" -c "import httpx, pyparsing" 2>/dev/null; then
@@ -56,8 +71,9 @@ COMPOSE=(docker compose --project-directory "$ROOT/deploy" -f "$ROOT/deploy/dock
 PROFILES=()
 for c in "${COMPONENTS[@]}"; do PROFILES+=(--profile "$c"); done
 
+# shellcheck disable=SC2329 # invoked via trap below
 cleanup() {
-  if [[ $DOWN -eq 1 ]]; then
+  if [[ $DOWN -eq 1 && $START -eq 1 ]]; then
     echo "==> stopping stack"
     "${COMPOSE[@]}" --profile certify --profile verify down --volumes --remove-orphans || true
   fi

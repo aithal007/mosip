@@ -35,8 +35,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Static checks (shell, compose)
+        run: |
+          shellcheck run-conformance.sh run-full-stack-conformance.sh scripts/*.sh
+          docker compose --project-directory deploy -f deploy/docker-compose.yml --env-file deploy/versions.env --profile certify --profile verify config -q
       - run: pip install -r harness/requirements.txt pytest
       - run: python -m pytest -q
+        working-directory: harness
+      - name: Probe self-test (mutation score)
+        run: python -m icg selftest | tee -a "$GITHUB_STEP_SUMMARY"
         working-directory: harness
       - uses: actions/setup-java@v4
         with:
@@ -96,7 +103,7 @@ jobs:
       - name: Restore previous baseline
         uses: actions/cache/restore@v4
         with:
-          path: results/baseline-results.json
+          path: results/baseline-*.json
           key: conformance-baseline-${{ matrix.slug }}-${{ github.run_id }}
           restore-keys: conformance-baseline-${{ matrix.slug }}-
 
@@ -120,7 +127,7 @@ jobs:
         if: always() && steps.run.outputs.exit == '0'
         uses: actions/cache/save@v4
         with:
-          path: results/baseline-results.json
+          path: results/baseline-*.json
           key: conformance-baseline-${{ matrix.slug }}-${{ github.run_id }}
 
       - name: Upload reports
@@ -175,10 +182,13 @@ jobs:
           name: conformance-combined
           path: combined
       - name: Build in-toto Test Result statement
+        env:
+          CERTIFY_IMAGE: ${{ inputs.certify_image || 'injistack/inji-certify-with-plugins:1.0.0-alpha.1' }}
+          VERIFY_IMAGE: ${{ inputs.verify_image || 'injistack/inji-verify-service:1.0.0-alpha.1' }}
         run: |
           set -euo pipefail
           subjects=()
-          for image in "${{ inputs.certify_image || 'injistack/inji-certify-with-plugins:1.0.0-alpha.1' }}" "${{ inputs.verify_image || 'injistack/inji-verify-service:1.0.0-alpha.1' }}"; do
+          for image in "$CERTIFY_IMAGE" "$VERIFY_IMAGE"; do
             digest=$(docker buildx imagetools inspect "$image" --format '{{json .Manifest.Digest}}' | tr -d '"')
             subjects+=(--subject "${image%%:*}=${digest}")
           done
