@@ -300,3 +300,73 @@ def test_attestation_statement():
     assert statement["subject"][0]["digest"] == {"sha256": "abc"}
     with pytest.raises(ValueError):
         parse_subjects(["no-digest"])
+
+
+# -- Tier 1 hardening ----------------------------------------------------------------
+
+
+def test_expected_skip_does_not_hide_new_failure():
+    m = module(result="FAILED", findings=[Finding(condition="NewBreakage", block="b", result="FAILURE", message="")])
+    bench = Benchmark([], [{"test-name": "oid4vp-1final-verifier-happy-flow", "variant": "*", "configuration-filename": "*", "issue": "https://example/1"}])
+    classify(m, CONFIG, bench)
+    assert m.verdict == Verdict.FAIL.value
+
+
+def test_benchmark_validate_flags_missing_issue():
+    bench = Benchmark([entry("X", issue="TODO")], [])
+    assert len(bench.validate()) == 1
+    assert Benchmark([entry("X")], []).validate() == []
+
+
+def test_only_client_error_statuses_count_as_rejection():
+    from icg.handoff.verify import REJECTION_STATUSES
+
+    assert 400 in REJECTION_STATUSES
+    assert not {401, 403, 404, 429, 500, 502} & REJECTION_STATUSES
+
+
+def test_main_returns_2_on_unexpected_exception(monkeypatch):
+    from icg import cli
+
+    def boom(_args):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(cli, "command_readiness", boom, raising=False)
+    parser = cli.build_parser()
+    args = parser.parse_args(["readiness"])
+    args.func = boom
+    monkeypatch.setattr(parser.__class__, "parse_args", lambda self, argv=None: args)
+    assert cli.main(["readiness"]) == 2
+
+
+def test_handoff_state_retried_until_ready_then_marked_handled():
+    from icg.handoff.base import HandoffAdapter
+
+    class FakeLedger:
+        def __init__(self):
+            self.state = {}
+
+        def get(self, _id):
+            return self.state
+
+        def update(self, _id, **kw):
+            self.state.update(kw)
+
+    class Ready(HandoffAdapter):
+        test_name_prefixes = ("x",)
+        ready = False
+
+        def handle_waiting(self, ctx):
+            return None if self.ready else False
+
+    class Ctx:
+        module_id, test_name, updated = "M", "x-test", "t1"
+        browser: dict = {}
+
+    ctx, ledger, adapter = Ctx(), FakeLedger(), Ready(settings=None)
+    ctx.ledger = ledger
+    adapter.on_waiting(ctx)
+    assert "lastHandledUpdate" not in ledger.state  # not ready: retried on next poll
+    adapter.ready = True
+    adapter.on_waiting(ctx)
+    assert ledger.state["lastHandledUpdate"] == "t1"

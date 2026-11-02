@@ -79,7 +79,7 @@ def command_run(args: argparse.Namespace) -> int:
     settings = Settings.from_env()
     components = _components(args)
     manifests = [ComponentManifest.load(c) for c in components]
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:17]
     out_root = Path(args.out).resolve()
     run_dir = out_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -137,6 +137,8 @@ def command_run(args: argparse.Namespace) -> int:
         for component_run in sorted(component_runs, key=lambda r: components.index(r.component)):
             manifest = by_component[component_run.component]
             benchmark = Benchmark.load(manifest.expected_failures, manifest.expected_skips)
+            for problem in benchmark.validate():
+                log.warning("benchmark: %s", problem)
             for plan in component_run.plans:
                 run.plans.append(plan)
                 try:
@@ -147,12 +149,13 @@ def command_run(args: argparse.Namespace) -> int:
     results_path = run_dir / "results.json"
     run.write(results_path)
 
-    baseline_path = Path(args.baseline) if args.baseline else out_root / "baseline-results.json"
+    default_baseline = out_root / f"baseline-{'-'.join(sorted(components))}.json"
+    baseline_path = Path(args.baseline) if args.baseline else default_baseline
     diff = diff_runs(RunResult.load(baseline_path), run) if baseline_path.exists() else None
     reports = write_reports(run_dir, run, diff, manifests)
     shutil.copyfile(results_path, out_root / "latest-results.json")
     if args.update_baseline and run.is_gate_passing():
-        shutil.copyfile(results_path, out_root / "baseline-results.json")
+        shutil.copyfile(results_path, default_baseline)
 
     print(markdown_summary(run, diff))
     print(f"results : {results_path}\nreport  : {reports['html']}\njunit   : {reports['junit']}")
@@ -214,6 +217,14 @@ def command_attest(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_probe(args: argparse.Namespace) -> int:
+    from .probe import run_probes, to_json
+
+    results = run_probes(Settings.from_env(), args.component or list(COMPONENTS))
+    print(to_json(results))
+    return 1 if any(r.status == "FAIL" for r in results) else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="icg", description="Inji Conformance Gate")
     parser.add_argument("--version", action="version", version=__version__)
@@ -229,7 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--parallel", action="store_true", help="run components concurrently")
     run.add_argument("--readiness", action="store_true", help="also run HAIP plans whose capabilities are all supported")
     run.add_argument("--out", default=str(REPO_ROOT / "results"))
-    run.add_argument("--baseline", help="results.json to diff against (default: <out>/baseline-results.json)")
+    run.add_argument("--baseline", help="results.json to diff against (default: <out>/baseline-<components>.json)")
     run.add_argument("--update-baseline", action="store_true", help="store this run as the baseline when the gate passes")
     run.add_argument("--skip-wait", action="store_true")
     run.add_argument("--no-seed", action="store_true", help="do not register the SD-JWT credential config in Certify")
@@ -266,6 +277,10 @@ def build_parser() -> argparse.ArgumentParser:
     suggest.add_argument("--component", required=True, choices=COMPONENTS)
     suggest.set_defaults(func=command_suggest)
 
+    probe = sub.add_parser("probe", help="black-box negative probes (replay, wrong tx_code, garbage VP); not part of the OpenID gate")
+    probe.add_argument("--component", action="append", choices=COMPONENTS)
+    probe.set_defaults(func=command_probe)
+
     attest = sub.add_parser("attest", help="emit an in-toto Test Result statement")
     attest.add_argument("--results", required=True)
     attest.add_argument("--subject", action="append", default=[], help="name=sha256:<hex> (repeatable)")
@@ -290,4 +305,7 @@ def main(argv: list[str] | None = None) -> int:
         return int(args.func(args))
     except FileNotFoundError as exc:
         log.error("%s", exc)
+        return 2
+    except Exception as exc:  # exit 1 is reserved for "gate failed (regression)"
+        log.error("infrastructure error: %s: %s", type(exc).__name__, exc, exc_info=args.verbose)
         return 2

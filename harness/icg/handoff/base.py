@@ -94,16 +94,21 @@ class HandoffAdapter:
         state = ctx.ledger.get(ctx.module_id)
         if state.get("lastHandledUpdate") == ctx.updated:
             return
-        ctx.ledger.update(ctx.module_id, lastHandledUpdate=ctx.updated, testName=ctx.test_name)
-
         pending = self._pending_placeholders(ctx)
         if pending:
             for placeholder in pending:
                 self.resolve_review(ctx, placeholder)
+        elif self.handle_waiting(ctx) is False:
+            # The suite has not exposed what the adapter needs yet: leave this state
+            # unhandled so the next poll retries it.
+            ctx.ledger.update(ctx.module_id, testName=ctx.test_name)
             return
-        self.handle_waiting(ctx)
+        # Only mark the state handled once the action succeeded; a raised error is
+        # retried by the agent (bounded by MAX_ATTEMPTS_PER_STATE).
+        ctx.ledger.update(ctx.module_id, lastHandledUpdate=ctx.updated, testName=ctx.test_name)
 
-    def handle_waiting(self, ctx: HandoffContext) -> None:
+    def handle_waiting(self, ctx: HandoffContext) -> bool | None:
+        """Act on a WAITING module. Return ``False`` if not ready yet (retry next poll)."""
         raise NotImplementedError
 
     def resolve_review(self, ctx: HandoffContext, placeholder: dict[str, Any]) -> None:

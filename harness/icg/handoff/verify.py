@@ -87,6 +87,10 @@ def expected_outcome(placeholder: dict[str, Any]) -> str:
     return "UNKNOWN"
 
 
+# 4xx statuses that mean "the submission was rejected"; anything else is not a verdict.
+REJECTION_STATUSES = frozenset({400, 409, 410, 422})
+
+
 class VerifyHandoff(HandoffAdapter):
     component = "verify"
     test_name_prefixes = ("oid4vp-",)
@@ -107,12 +111,12 @@ class VerifyHandoff(HandoffAdapter):
         # redirect_uri client identifier prefix requires (client_id == response_uri).
         return f"redirect_uri:{self.response_uri}"
 
-    def handle_waiting(self, ctx: HandoffContext) -> None:
+    def handle_waiting(self, ctx: HandoffContext) -> bool | None:
         authorization_endpoint = ctx.exposed.get("authorization_endpoint")
         if not authorization_endpoint or not ctx.browser.get("uriInputRequests"):
-            return
+            return False
         if ctx.ledger.get(ctx.module_id).get("authorizationRequestDelivered"):
-            return
+            return None
 
         vp_request = self._create_vp_request()
         query = build_authorization_query(self.client_id, vp_request)
@@ -206,9 +210,11 @@ class VerifyHandoff(HandoffAdapter):
                     ],
                 }
                 return str(last["vpResultStatus"]), summary
-            if response.status_code >= 400 and response.status_code != 404:
+            if response.status_code in REJECTION_STATUSES:
                 # Inji Verify reports rejected submissions (invalid token, wallet error)
-                # as error responses on the result endpoint.
+                # as client-error responses on the result endpoint. Auth failures, rate
+                # limits and 5xx are infrastructure problems, not a verdict, and must not
+                # satisfy a negative test's expectation.
                 return "FAILED", {"httpStatus": response.status_code, **last}
             time.sleep(delay)
         return "NO_RESULT", last

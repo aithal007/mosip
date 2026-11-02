@@ -94,6 +94,12 @@ testrig/injicertify|injiverify/ OpenIDConformanceTest classes + TestNG suite fil
 docs/                           architecture, handoff, benchmark, API, integration, certification, troubleshooting
 ```
 
+## Negative probes
+
+`python -m icg probe [--component certify|verify]` sends deliberately bad requests that the suite does not cover and asserts Inji refuses them: an offer for an unknown credential configuration, a replayed pre-authorized code, a wrong `tx_code`, a garbage `vp_token`, and the path-inserted metadata URL ([inji-certify#967](https://github.com/inji/inji-certify/issues/967)). Probes are reported as JSON, never feed the OpenID gate, and return `SKIP` when a request cannot run. They have unit tests against a mocked server but have not been run against a live Inji stack.
+
+Set `ICG_SHOW_UNTESTED_MODULES=<family>` to make the upstream runner fail when the suite offers modules that no plan manifest selects.
+
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md): components, data flow and design decisions
@@ -108,7 +114,7 @@ docs/                           architecture, handoff, benchmark, API, integrati
 ## Tests
 
 ```bash
-cd harness && python -m pytest -q                         # 31 unit tests, no Docker needed
+cd harness && python -m pytest -q                         # 39 unit tests, no Docker needed
 cd testrig/conformance-bridge && mvn -q verify             # Java bridge tests (JDK 21)
 ```
 
