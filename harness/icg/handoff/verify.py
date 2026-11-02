@@ -177,10 +177,10 @@ class VerifyHandoff(HandoffAdapter):
 
     # -- Inji Verify API --------------------------------------------------------
 
-    def _create_vp_request(self) -> dict[str, Any]:
+    def _create_vp_request(self, nonce: str | None = None) -> dict[str, Any]:
         body = {
             "clientId": self.client_id,
-            "nonce": secrets.token_urlsafe(24),
+            "nonce": nonce or secrets.token_urlsafe(24),
             "dcqlQuery": self._dcql,
             "responseCodeValidationRequired": False,
         }

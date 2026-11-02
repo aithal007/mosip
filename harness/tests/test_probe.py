@@ -51,3 +51,23 @@ def test_replay_rejected_passes_and_accepted_fails():
 def test_wrong_tx_code():
     assert probe_wrong_tx_code(client(make_handler(reuse_ok=False)), settings()).status == "PASS"
     assert probe_wrong_tx_code(client(make_handler(reuse_ok=False, tx_ok=True)), settings()).status == "FAIL"
+
+
+def test_corpus_probe_is_inconclusive_when_control_not_accepted(monkeypatch):
+    from icg import probe
+    from icg.handoff.verify import VerifyHandoff
+
+    monkeypatch.setattr(VerifyHandoff, "_create_vp_request", lambda self, nonce=None: {"requestId": "r", "transactionId": "t"})
+    monkeypatch.setattr(VerifyHandoff, "_fetch_vp_result", lambda self, tid, attempts=10, delay=1.0: ("FAILED", {}))
+    out = probe.probe_sdjwt_corpus(client(lambda r: httpx.Response(200)), settings())
+    assert [r.status for r in out] == ["SKIP"] and "inconclusive" in out[0].detail
+
+
+def test_corpus_probe_flags_accepted_tampering(monkeypatch):
+    from icg import probe
+    from icg.handoff.verify import VerifyHandoff
+
+    monkeypatch.setattr(VerifyHandoff, "_create_vp_request", lambda self, nonce=None: {"requestId": "r", "transactionId": "t"})
+    monkeypatch.setattr(VerifyHandoff, "_fetch_vp_result", lambda self, tid, attempts=10, delay=1.0: ("SUCCESS", {}))
+    out = probe.probe_sdjwt_corpus(client(lambda r: httpx.Response(200)), settings())
+    assert out and all(r.status == "FAIL" for r in out)

@@ -125,9 +125,50 @@ def probe_garbage_presentation(client: httpx.Client, settings: Settings) -> Prob
     return ProbeResult(name, "verify", spec, "PASS" if ok else "FAIL", f"vp-result status {status}")
 
 
+def probe_sdjwt_corpus(client: httpx.Client, settings: Settings) -> list[ProbeResult]:
+    """Send tampered SD-JWT presentations; every one must be refused.
+
+    Results only count if the untampered control is accepted, otherwise the verifier simply
+    does not trust our generated issuer key and a rejection proves nothing.
+    """
+    from .handoff.verify import VerifyHandoff
+    from .sdjwt_corpus import Context, build_cases
+
+    adapter = VerifyHandoff(settings)
+    dcql_id = adapter._dcql["credentials"][0]["id"]
+
+    def submit(case_presentation: str, context: Context, nonce: str, request: dict[str, Any]) -> str:
+        client.post(
+            f"{settings.verify_admin_url}/v2/vp-submission/direct-post",
+            data={"vp_token": json.dumps({dcql_id: [case_presentation]}), "state": request.get("requestId", "")},
+        )
+        status, _ = adapter._fetch_vp_result(request.get("transactionId"), attempts=3, delay=0.5)
+        return status
+
+    nonce = secrets.token_urlsafe(16)
+    context = Context(nonce=nonce, audience=adapter.client_id)
+    cases = build_cases(context)
+    results: list[ProbeResult] = []
+    outcomes: dict[str, str] = {}
+    for case in cases:
+        case_nonce = nonce
+        request = adapter._create_vp_request(nonce=case_nonce)
+        outcomes[case.name] = submit(case.presentation, context, case_nonce, request)
+
+    if outcomes.get("control-valid") != "SUCCESS":
+        return [ProbeResult("sdjwt-corpus", "verify", "RFC 9901", "SKIP", f"inconclusive: control presentation was {outcomes.get('control-valid')}, "
+                            "so the verifier does not trust the generated issuer key; register it as a trusted issuer to enable these probes")]
+    for case in cases:
+        if case.expect == "accept":
+            continue
+        accepted = outcomes[case.name] == "SUCCESS"
+        results.append(ProbeResult(f"sdjwt-{case.name}", "verify", case.source, "FAIL" if accepted else "PASS", f"{case.description}; vp-result {outcomes[case.name]}"))
+    return results
+
+
 PROBES: dict[str, list[Callable[[httpx.Client, Settings], ProbeResult]]] = {
     "certify": [probe_unknown_configuration, probe_preauth_replay, probe_wrong_tx_code, probe_path_inserted_metadata],
-    "verify": [probe_garbage_presentation],
+    "verify": [probe_garbage_presentation, probe_sdjwt_corpus],
 }
 
 
@@ -137,7 +178,8 @@ def run_probes(settings: Settings, components: list[str]) -> list[ProbeResult]:
         for component in components:
             for probe in PROBES[component]:
                 try:
-                    results.append(probe(client, settings))
+                    outcome = probe(client, settings)
+                    results.extend(outcome if isinstance(outcome, list) else [outcome])
                 except Exception as exc:  # an unrunnable probe is a SKIP, never a gate decision
                     results.append(ProbeResult(probe.__name__.removeprefix("probe_").replace("_", "-"), component, "", "SKIP", f"{type(exc).__name__}: {exc}"))
     return results
