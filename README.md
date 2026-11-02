@@ -98,6 +98,8 @@ docs/                           architecture, handoff, benchmark, API, integrati
 
 `python -m icg probe [--component certify|verify]` sends deliberately bad requests that the suite does not cover and asserts Inji refuses them: an offer for an unknown credential configuration, a replayed pre-authorized code, a wrong `tx_code`, a garbage `vp_token`, and the path-inserted metadata URL ([inji-certify#967](https://github.com/inji/inji-certify/issues/967)). Probes are reported as JSON, never feed the OpenID gate, and return `SKIP` when a request cannot run. They have unit tests against a mocked server but have not been run against a live Inji stack.
 
+**Live probe status (2 Nov 2026):** run against a live stack after a passing combined run — see [docs/FINDINGS.md](docs/FINDINGS.md) for the results: one new negative finding on Inji Certify (an offer for an unknown credential configuration is accepted with HTTP 200), the Verify `garbage vp_token` probe passing, and the SD-JWT corpus `inconclusive` pending a trusted-issuer setting in Inji Verify (as predicted in `docs/NEXT_STEPS.md`).
+
 ### SD-JWT tamper corpus and probe self-test
 
 Against Inji Verify, `icg probe` also sends 15 tampered SD-JWT presentations (altered, extra or duplicated disclosures, missing or wrong key-binding JWT, wrong nonce, audience, `sd_hash` or `typ`, `alg=none`, embedded `jwk`, expired credential, weak `_sd_alg`, claim collision), each tied to its RFC or CVE in `harness/icg/sdjwt_corpus.py`. The untampered control must be accepted first: if Inji does not trust the generated issuer key, the run reports `inconclusive` instead of a false pass.
@@ -107,6 +109,8 @@ Against Inji Verify, `icg probe` also sends 15 tampered SD-JWT presentations (al
 Set `ICG_SHOW_UNTESTED_MODULES=<family>` to make the upstream runner fail when the suite offers modules that no plan manifest selects.
 
 ## Documentation
+
+**Live demo & published artifacts:** [aithal007.github.io/mosip](https://aithal007.github.io/mosip/) — landing page, architecture, verified results, sample consolidated report, handoff ledger.
 
 - [Architecture](docs/ARCHITECTURE.md): components, data flow and design decisions
 - [Handoff handling](docs/HANDOFF.md): how the suite and each Inji component are joined up without a human

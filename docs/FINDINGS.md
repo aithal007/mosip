@@ -25,6 +25,18 @@ All 11 applicable modules pass. The 7 REVIEW results were resolved automatically
 |---|---|---|
 | V1 | `docker-compose/db-init/init.sql` on `release-1.0.x` predates the `vp_submission.response_code*` columns the 1.0.0-alpha.1 service queries, so every `direct_post` returns **HTTP 500** (`column v1_0.response_code does not exist`). The canonical `db_scripts/inji_verify/ddl` is correct | Anyone following the repo's compose setup gets a broken verifier. The harness initialises the database from the canonical DDL |
 
+## Live adversarial probe results (2 Nov 2026, Windows host, stack up after a passing combined run)
+
+| Probe | Component | Result | Meaning |
+|---|---|---|---|
+| `offer-for-unknown-configuration-rejected` | Certify | **FAIL — InjiCertify returned HTTP 200** | Creating a credential offer that references an unknown credential configuration is *accepted* (200), where a strict issuer would refuse it. The suite covers the credential-request path for this gap (see C3) but not the offer path; this is a new finding from the probes |
+| `garbage-vp-token-not-accepted` | Verify | PASS | A garbage `vp_token` submission is refused (`vp-result` status `NO_RESULT`) |
+| `sdjwt-corpus` (15 tampered SD-JWT presentations + control) | Verify | SKIP — `inconclusive` | The untampered control was rejected, i.e. Inji Verify does not trust the harness-generated issuer key, so the corpus cannot distinguish "tamper detected" from "key not trusted". Enabling it requires a trusted-issuer configuration in Inji Verify — exposed upstream as a design request. Matches the prediction in the handoff report |
+| `preauth-replay`, `wrong-tx-code` | Certify | SKIP — `getaddrinfo failed` on the gateway's `.test` hostname | Probe client on the Windows host cannot resolve `certify.inji.test` (Docker-network DNS only). Probes should target the published local ports on Windows (see Troubleshooting) |
+| `path-inserted-issuer-metadata` | Certify | SKIP — "issuer identifier has no path component" | Correct: the seeded SD-JWT credential configuration has a path-less issuer id |
+
+The corpus control behaviour is the main open design question for probes (handoff report §4.4): it needs a `did:jwk`/`x5c` trusted-issuer setting or equivalent in Inji Verify to become conclusive.
+
 ## Certification readiness
 
 `python -m icg readiness` lists what blocks the HAIP profile plans, which are the only ones that count for OpenID self-certification:
