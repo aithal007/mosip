@@ -370,3 +370,12 @@ def test_handoff_state_retried_until_ready_then_marked_handled():
     adapter.ready = True
     adapter.on_waiting(ctx)
     assert ledger.state["lastHandledUpdate"] == "t1"
+
+
+def test_clause_touched_only_by_review_is_review_state():
+    from icg.coverage import build_coverage
+
+    m = module(result="REVIEW")
+    m.requirements = ["OID4VP-1FINAL-8.2"]
+    run = RunResult(run_id="r", started_at="", finished_at="", mode="x", components=["verify"], suite_version="v", environment={}, modules=[m])
+    assert build_coverage(run)[0].state == "review"

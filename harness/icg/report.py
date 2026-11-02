@@ -132,7 +132,7 @@ table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px 10px
 th{font-size:12px;color:var(--muted);font-weight:600}tr:last-child td{border-bottom:0}code{font-size:12.5px}
 a{color:var(--accent)}details summary{cursor:pointer;color:var(--muted)}ul.find{margin:6px 0 0;padding-left:18px;font-size:12.5px}
 .grid{display:flex;flex-wrap:wrap;gap:3px}.cell{width:14px;height:14px;border-radius:3px}
-.cell.passing{background:var(--pass)}.cell.warning{background:var(--known)}.cell.failing{background:var(--fail)}
+.cell.passing{background:var(--pass)}.cell.warning{background:var(--known)}.cell.failing{background:var(--fail)}.cell.review{background:repeating-linear-gradient(45deg,var(--pass),var(--pass) 3px,var(--known) 3px,var(--known) 6px)}
 """
 
 _JS = """
@@ -202,14 +202,14 @@ def html_report(run: RunResult, diff: RunDiff | None = None, manifests: list[Com
 
     clauses = build_coverage(run)
     if clauses:
-        parts.append("<h2>Specification clauses exercised</h2><p class=muted>Each square is a requirement tag the suite checked during this run. Red: a failing check references it. Amber: warnings only.</p><div class=cards>")
+        parts.append("<h2>Specification clauses exercised</h2><p class=muted>Each square is a requirement tag the suite checked during this run. Red: a failing check references it. Amber: warnings only. Striped: only REVIEW results touch it - resolved from Inji's own verdict, not by a human.</p><div class=cards>")
         for spec, counts in coverage_by_spec(clauses).items():
             cells = "".join(
                 f"<span class='cell {c.state}' title='{e(c.requirement)} — {len(c.modules)} module(s)'></span>" for c in clauses if c.spec == spec
             )
             parts.append(
                 f"<article class=card><h3>{e(spec)}</h3><div class=grid>{cells}</div>"
-                f"<div class=legend>{counts['passing']} passing · {counts['warning']} warning · {counts['failing']} failing</div></article>"
+                f"<div class=legend>{counts['passing']} passing · {counts['review']} review-resolved · {counts['warning']} warning · {counts['failing']} failing</div></article>"
             )
         parts.append("</div>")
 

@@ -98,6 +98,12 @@ docs/                           architecture, handoff, benchmark, API, integrati
 
 `python -m icg probe [--component certify|verify]` sends deliberately bad requests that the suite does not cover and asserts Inji refuses them: an offer for an unknown credential configuration, a replayed pre-authorized code, a wrong `tx_code`, a garbage `vp_token`, and the path-inserted metadata URL ([inji-certify#967](https://github.com/inji/inji-certify/issues/967)). Probes are reported as JSON, never feed the OpenID gate, and return `SKIP` when a request cannot run. They have unit tests against a mocked server but have not been run against a live Inji stack.
 
+### SD-JWT tamper corpus and probe self-test
+
+Against Inji Verify, `icg probe` also sends 15 tampered SD-JWT presentations (altered, extra or duplicated disclosures, missing or wrong key-binding JWT, wrong nonce, audience, `sd_hash` or `typ`, `alg=none`, embedded `jwk`, expired credential, weak `_sd_alg`, claim collision), each tied to its RFC or CVE in `harness/icg/sdjwt_corpus.py`. The untampered control must be accepted first: if Inji does not trust the generated issuer key, the run reports `inconclusive` instead of a false pass.
+
+`python -m icg selftest` needs no Docker. It checks the probes themselves with mutation testing: a strict reference verifier (`refverifier.py`) rejects every tampered case, then each of its 12 rules is switched off in turn and the probes must notice. Current score: 12/12 mutants caught. The first version of this test exposed a blind spot in its own reference verifier, which is the point of running it.
+
 Set `ICG_SHOW_UNTESTED_MODULES=<family>` to make the upstream runner fail when the suite offers modules that no plan manifest selects.
 
 ## Documentation

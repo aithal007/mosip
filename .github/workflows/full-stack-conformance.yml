@@ -42,6 +42,9 @@ jobs:
       - run: pip install -r harness/requirements.txt pytest
       - run: python -m pytest -q
         working-directory: harness
+      - name: Probe self-test (mutation score)
+        run: python -m icg selftest | tee -a "$GITHUB_STEP_SUMMARY"
+        working-directory: harness
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

@@ -125,7 +125,7 @@ def probe_garbage_presentation(client: httpx.Client, settings: Settings) -> Prob
     return ProbeResult(name, "verify", spec, "PASS" if ok else "FAIL", f"vp-result status {status}")
 
 
-def probe_sdjwt_corpus(client: httpx.Client, settings: Settings) -> list[ProbeResult]:
+def probe_sdjwt_corpus(client: httpx.Client, settings: Settings, issuer_key=None) -> list[ProbeResult]:
     """Send tampered SD-JWT presentations; every one must be refused.
 
     Results only count if the untampered control is accepted, otherwise the verifier simply
@@ -135,6 +135,7 @@ def probe_sdjwt_corpus(client: httpx.Client, settings: Settings) -> list[ProbeRe
     from .sdjwt_corpus import Context, build_cases
 
     adapter = VerifyHandoff(settings)
+    adapter._http = client  # one HTTP client for everything (and an injection point for selftest)
     dcql_id = adapter._dcql["credentials"][0]["id"]
 
     def submit(case_presentation: str, context: Context, nonce: str, request: dict[str, Any]) -> str:
@@ -147,7 +148,7 @@ def probe_sdjwt_corpus(client: httpx.Client, settings: Settings) -> list[ProbeRe
 
     nonce = secrets.token_urlsafe(16)
     context = Context(nonce=nonce, audience=adapter.client_id)
-    cases = build_cases(context)
+    cases = build_cases(context, issuer_key)
     results: list[ProbeResult] = []
     outcomes: dict[str, str] = {}
     for case in cases:

@@ -100,8 +100,9 @@ def _present(ctx: Context, jwt: str, disclosures: list[str], holder_key, *, kb=T
     return body + sign_jwt({"alg": "ES256", "typ": typ}, claims, holder_key)
 
 
-def build_cases(ctx: Context) -> list[Case]:
-    issuer_key, holder_key, other_key = (ec.generate_private_key(ec.SECP256R1()) for _ in range(3))
+def build_cases(ctx: Context, issuer_key: ec.EllipticCurvePrivateKey | None = None) -> list[Case]:
+    issuer_key = issuer_key or ec.generate_private_key(ec.SECP256R1())
+    holder_key, other_key = (ec.generate_private_key(ec.SECP256R1()) for _ in range(2))
     jwt, discs = _issue(ctx, issuer_key, holder_key)
     cases: list[Case] = []
 
@@ -110,7 +111,8 @@ def build_cases(ctx: Context) -> list[Case]:
 
     add("control-valid", "Well-formed presentation; must be accepted or the run is inconclusive", "RFC 9901 s7", _present(ctx, jwt, discs, holder_key), expect="accept")
 
-    flipped = discs[0][:-2] + ("AA" if not discs[0].endswith("AA") else "BB")
+    salt, name, _value = json.loads(base64.urlsafe_b64decode(discs[0] + "=" * (-len(discs[0]) % 4)))
+    flipped = disclosure(name, "Mallory", salt)  # same salt and claim, different value: digest no longer matches
     add("disclosure-tampered", "A disclosure's bytes changed so its digest is no longer in _sd (must not be silently dropped)", "RFC 9901 s7.1; CVE-2026-62374", _present(ctx, jwt, [flipped, discs[1]], holder_key))
     add("disclosure-unreferenced", "Extra disclosure not referenced by any digest", "RFC 9901 s7.1", _present(ctx, jwt, discs + [disclosure("role", "admin")], holder_key))
     add("disclosure-duplicated", "Same disclosure sent twice", "RFC 9901 s7.1", _present(ctx, jwt, discs + [discs[0]], holder_key))

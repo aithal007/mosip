@@ -225,6 +225,14 @@ def command_probe(args: argparse.Namespace) -> int:
     return 1 if any(r.status == "FAIL" for r in results) else 0
 
 
+def command_selftest(args: argparse.Namespace) -> int:
+    from .selftest import run_selftest, to_markdown
+
+    report = run_selftest(Settings.from_env())
+    print(to_markdown(report))
+    return 0 if report.baseline_clean and not report.survivors else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="icg", description="Inji Conformance Gate")
     parser.add_argument("--version", action="version", version=__version__)
@@ -280,6 +288,9 @@ def build_parser() -> argparse.ArgumentParser:
     probe = sub.add_parser("probe", help="black-box negative probes (replay, wrong tx_code, garbage VP); not part of the OpenID gate")
     probe.add_argument("--component", action="append", choices=COMPONENTS)
     probe.set_defaults(func=command_probe)
+
+    selftest = sub.add_parser("selftest", help="mutation-test the SD-JWT probes against a reference verifier (no Docker needed)")
+    selftest.set_defaults(func=command_selftest)
 
     attest = sub.add_parser("attest", help="emit an in-toto Test Result statement")
     attest.add_argument("--results", required=True)
