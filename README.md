@@ -24,6 +24,8 @@ This project turns that manual, one-off process into an unattended gate:
 ./run-conformance.sh --combined --parallel    # both, one consolidated report and gate
 ```
 
+For a live presentation: `scripts/demo-live.sh warm` pre-pulls images and starts the stack, then `scripts/demo-live.sh run` executes the combined plan against it and opens the generated report.
+
 Real run against `1.0.0-alpha.1` images (full artifacts in [docs/sample-run/](docs/sample-run/)):
 
 | Component | Modules | Pass | Known issue (issue-linked) | Regression |
