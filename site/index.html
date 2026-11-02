@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inji Conformance Gate — Automated OpenID conformance testing for Inji Certify &amp; Verify</title>
+<meta name="description" content="MOSIP Decode 2026 PS-01: unattended OpenID Foundation conformance testing for Inji Certify (OID4VCI) and Inji Verify (OID4VP), wired into api-testrig and CI.">
+<link rel="icon" href="demo/badge.svg">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#111737; --card:#151b3f; --card2:#1a224e;
+    --line:#28306b; --text:#e6eaff; --muted:#9aa3d6;
+    --acc:#6c8cff; --acc2:#8b5cf6; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+    --mono:'Cascadia Code',ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 'Segoe UI',system-ui,-apple-system,sans-serif}
+  a{color:var(--acc);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  header.hero{padding:72px 0 40px;background:
+    radial-gradient(600px 300px at 20% 0%,rgba(108,140,255,.18),transparent),
+    radial-gradient(600px 300px at 85% 10%,rgba(139,92,246,.15),transparent),var(--bg)}
+  .pill{display:inline-block;padding:4px 12px;border:1px solid var(--line);border-radius:999px;
+    font-size:13px;color:var(--muted);margin:0 8px 16px 0;background:var(--card)}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:0 0 12px}
+  .grad{background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:19px;color:var(--muted);max-width:760px;margin:0 0 26px}
+  .cta{display:inline-block;padding:12px 22px;border-radius:12px;font-weight:600;margin:0 12px 12px 0}
+  .cta.p{background:linear-gradient(92deg,var(--acc),var(--acc2));color:#fff}
+  .cta.s{border:1px solid var(--line);color:var(--text);background:var(--card)}
+  section{padding:46px 0}
+  h2{font-size:26px;margin:0 0 18px}
+  h3{font-size:18px;margin:22px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .stat .n{font-size:34px;font-weight:700;background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{color:var(--muted);font-size:14px;margin-top:4px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:14px 0}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin:14px 0}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--card2);color:var(--muted);font-weight:600}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  code,pre{font-family:var(--mono);font-size:13.5px}
+  code{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  pre{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.6}
+  pre code{background:none;border:none;padding:0}
+  .k{color:#8b5cf6}.g{color:#34d399}.y{color:#fbbf24}.c{color:#5b6396}.b{color:#6c8cff}
+  .tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.4px}
+  .tag.pass{background:rgba(52,211,153,.15);color:var(--ok)}
+  .tag.known{background:rgba(251,191,36,.15);color:var(--warn)}
+  .tag.reg{background:rgba(248,113,113,.15);color:var(--bad)}
+  .tag.stale{background:rgba(139,92,246,.15);color:#c4b5fd}
+  .tag.skip{background:var(--card2);color:var(--muted)}
+  .mermaid{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0}
+  .mermaid svg{max-width:100%;height:auto}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:30px 0 60px}
+  .step{display:flex;gap:14px;margin:14px 0;align-items:flex-start}
+  .step .num{flex:0 0 34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--card2);border:1px solid var(--line)}
+  @media(max-width:640px){.hide-m{display:none}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="pill">MOSIP Decode 2026 · PS-01</span>
+      <span class="pill">OpenID Foundation conformance</span>
+      <span class="pill">OID4VCI · OID4VP · SD-JWT VC</span>
+    </div>
+    <h1>Inji Conformance Gate</h1>
+    <p class="sub">The OpenID conformance suite is built for a human clicking through a wallet UI — workable once for a certification submission, unusable on every PR. This turns it into an <b>unattended, click-free, benchmark-gated release gate</b> for Inji&nbsp;Certify and Inji&nbsp;Verify, with results surfaced inside MOSIP's own api-testrig reports.</p>
+    <a class="cta p" href="demo/conformance-report.html">Open the live sample report ▸</a>
+    <a class="cta s" href="https://github.com/aithal007/mosip">Source &amp; CI ▸</a>
+    <a class="cta s" href="https://github.com/aithal007/mosip/blob/main/docs/ARCHITECTURE.md">Architecture doc ▸</a>
+    <div class="grid" style="margin-top:30px">
+      <div class="stat"><div class="n">20</div><div class="l">conformance modules run unattended, in one command</div></div>
+      <div class="stat"><div class="n">~35 s</div><div class="l">combined parallel run time on a warm stack</div></div>
+      <div class="stat"><div class="n">0 clicks</div><div class="l">every suite pause answered by the handoff agent via Inji's real APIs</div></div>
+      <div class="stat"><div class="n">7 → 0</div><div class="l">REVIEW results that previously needed a human; now auto-resolved with evidence</div></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="how">
+  <h2>How it works</h2>
+  <div class="card step"><div class="num">1</div><div><b>One command starts everything.</b> <code>./run-conformance.sh --component certify|verify | --combined --parallel</code> boots the pinned OpenID suite, a TLS gateway, Inji Certify and Inji Verify via docker-compose, seeds the SD-JWT credential configuration, and runs the plans.</div></div>
+  <div class="card step"><div class="num">2</div><div><b>The unmodified upstream runner drives the suite.</b> <code>run-test-plan.py</code> from the OpenID Foundation runs as a subprocess — plan creation, retries, signed exports are all upstream. Upgrading the suite is one line.</div></div>
+  <div class="card step"><div class="num">3</div><div><b>A handoff agent keeps the run alive.</b> The suite pauses whenever a real issuer or verifier must act. The agent polls the suite's own state and answers each pause using Inji's real APIs — credential offers from <code>/pre-authorized-data</code>, authorization requests from <code>/v2/vp-request</code> — exactly what a real wallet or verifier UI would do.</div></div>
+  <div class="card step"><div class="num">4</div><div><b>REVIEW results are resolved with evidence, not a human.</b> Where the suite would show a placeholder and ask a person to eyeball a screenshot, the resolver asks Inji Verify for its own verdict, cross-checks it against what the module expected, and uploads a PNG evidence card into the suite for the audit trail.</div></div>
+  <div class="card step"><div class="num">5</div><div><b>An issue-linked benchmark gates releases.</b> Every expected failure (Inji is pre-1.0) carries a tracked GitHub issue. The gate fails only on <i>regressions</i>; anything that starts passing is flagged <span class="tag stale">STALE_BENCHMARK</span> so the benchmark never rots. Shims are declared in the plan manifest and printed in every report — nothing is hidden.</div></div>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <div class="mermaid">
+flowchart LR
+  subgraph CI["CI / developer / api-testrig"]
+    SH[run-conformance.sh] --> ICG
+    TNG["OpenIDConformanceTest<br/>(TestNG)"] --> BR["conformance-bridge<br/>(Java)"] --> ICG
+    ICG["icg run<br/>(Python harness)"]
+  end
+  subgraph H["Harness internals"]
+    RTP["run-test-plan.py<br/>upstream, unmodified"]
+    AG["Handoff agent<br/>+ REVIEW resolver"]
+    COL["Collector + benchmark"]
+    REP["Report · diff · gate · attestation"]
+  end
+  ICG --> RTP
+  ICG --> AG
+  ICG --> COL --> REP
+
+  subgraph S["docker compose (network icg)"]
+    SUITE["Conformance suite<br/>server + mongodb + nginx"]
+    GW["TLS gateway<br/>certify.inji.test · verify.inji.test"]
+    CERT["Inji Certify<br/>+ Postgres"]
+    VER["Inji Verify<br/>+ Postgres"]
+  end
+  RTP -- "create plan / run modules" --> SUITE
+  AG -- "poll WAITING; deliver offer /<br/>authorization request; upload evidence" --> SUITE
+  AG -- "POST /pre-authorized-data" --> CERT
+  AG -- "POST /vp-request ·<br/>GET /vp-result" --> VER
+  SUITE -- "wallet role: metadata,<br/>token, credential, direct_post" --> GW
+  GW --> CERT
+  GW --> VER
+  COL -- "GET /api/plan · /api/info" --> SUITE
+  </div>
+  <div class="grid">
+    <div class="card"><h3 style="margin-top:0">Keep upstream unmodified</h3><p style="color:var(--muted);font-size:14px;margin:0">Plan execution, parallel queues, retries and signed exports come from the upstream runner. The harness adds only what upstream lacks: handoff to an external system under test.</p></div>
+    <div class="card"><h3 style="margin-top:0">Real APIs, not mocks</h3><p style="color:var(--muted);font-size:14px;margin:0">Every handoff call is made to the real Inji endpoints, rebuilt exactly as Inji Verify's SDK does — so the suite tests what a production wallet would see.</p></div>
+    <div class="card"><h3 style="margin-top:0">Fail closed</h3><p style="color:var(--muted);font-size:14px;margin:0">Missing plans, zero selected modules, modules stuck in WAITING, or unknown verdicts in the Java bridge → <code>exit 1/2</code>. A blind spot can never report success.</p></div>
+    <div class="card"><h3 style="margin-top:0">Pin + disclose</h3><p style="color:var(--muted);font-size:14px;margin:0">Suite tag, Inji images and upstream refs are pinned in <code>versions.env</code>. Every compatibility shim is declared in the plan manifest and printed in reports, next to its tracking issue.</p></div>
+  </div>
+</section>
+
+<section id="results">
+  <h2>Verified results</h2>
+  <p style="color:var(--muted)">Full artifacts, including the consolidated HTML report, handoff ledger and upstream signed exports, are in this site's <a href="demo/results.json">demo folder</a> and in every <a href="https://github.com/aithal007/mosip/actions">CI run</a>.</p>
+  <table>
+    <tr><th>Component (plan, variant)</th><th>Modules</th><th style="text-align:center"><span class="tag pass">PASS</span></th><th style="text-align:center"><span class="tag known">KNOWN_ISSUE</span></th><th style="text-align:center"><span class="tag reg">Regression</span></th></tr>
+    <tr><td>Inji Certify · <code>oid4vci-1_0-issuer-test-plan</code><br><span style="color:var(--muted);font-size:13px">SD-JWT VC · pre-authorized code</span></td><td>9</td><td style="text-align:center">4</td><td style="text-align:center">5</td><td style="text-align:center">0</td></tr>
+    <tr><td>Inji Verify · <code>oid4vp-1final-verifier-test-plan</code><br><span style="color:var(--muted);font-size:13px">SD-JWT VC · redirect_uri · direct_post</span></td><td>11</td><td style="text-align:center">11</td><td style="text-align:center">0</td><td style="text-align:center">0</td></tr>
+  </table>
+  <div class="card">
+    <h3 style="margin-top:0">The REVIEW problem, solved</h3>
+    <p style="color:var(--muted);font-size:15px;margin:0">The OID4VP plan produces 7 <span class="tag skip">REVIEW</span> placeholders that a human would resolve by examining screenshots. The harness resolved <b>all 7</b> automatically: it compared Inji Verify's own verdict with the outcome each module expected, attached PNG evidence cards to the suite, and — against MOSIP's own manual run (<a href="https://github.com/inji/inji-verify/issues/2013">inji-verify#2013</a>) — resolved 6 of those that had been left for a person.</p>
+  </div>
+  <h3>Every verdict is explicit</h3>
+  <table>
+    <tr><th>Verdict</th><th>Meaning</th></tr>
+    <tr><td><span class="tag pass">PASS</span></td><td>module passed the suite</td></tr>
+    <tr><td><span class="tag known">KNOWN_ISSUE</span></td><td>failed, but matches an issue-linked benchmark entry — tracked, visible, not a regression</td></tr>
+    <tr><td><span class="tag reg">FAIL</span></td><td>new failure or benchmark-item regression → gate fails (exit 1)</td></tr>
+    <tr><td><span class="tag stale">STALE_BENCHMARK</span></td><td>an expected failure now passes → benchmark entry should be removed</td></tr>
+    <tr><td><span class="tag skip">SKIP</span> / <span class="tag skip">INCOMPLETE</span></td><td>module not runnable / never finished → <b>fails the gate</b>; never silently ignored</td></tr>
+  </table>
+</section>
+
+<section id="negative">
+  <h2>Beyond the suite: adversarial probes</h2>
+  <div class="card">
+    <p style="margin:0 0 14px">The suite only checks what the spec's happy paths cover. <code>icg probe</code> attacks Inji with what the suite doesn't cover — and asserts the system refuses:</p>
+    <ul style="color:var(--muted);margin:0 0 14px">
+      <li>credential offers for unknown configurations, replayed pre-authorized codes, wrong <code>tx_code</code>, path-inserted metadata (<a href="https://github.com/inji/inji-certify/issues/967">inji-certify#967</a>)</li>
+      <li>an SD-JWT tamper corpus — 15 mutated SD-JWT VC presentations (altered/duplicated disclosures, wrong key-binding JWT, wrong nonce, audience, <code>sd_hash</code>, <code>alg=none</code>, embedded <code>jwk</code>, expired credentials, claim collision…) each tied to its RFC or CVE</li>
+      <li>a strict reference verifier and a <b>mutation-test self-check</b>: each of its 12 rules is switched off in turn and the probes must notice — currently <b>12/12</b> caught. An untampered control must pass first, or the run reports <i>inconclusive</i> instead of a false pass</li>
+    </ul>
+    <p style="margin:0;color:var(--muted)">Probe results are JSON, never feed the OpenID gate, and degrade to <code>SKIP</code> when a request cannot be made.</p>
+  </div>
+</section>
+
+<section id="ps01">
+  <h2>PS-01 requirement mapping</h2>
+  <table>
+    <tr><th>Problem statement asks for</th><th>Where it is</th></tr>
+    <tr><td>docker-compose bringing up Certify, Verify and the suite</td><td><code>deploy/docker-compose.yml</code>, profiles <code>certify</code>/<code>verify</code>, started by <code>run-conformance.sh</code></td></tr>
+    <tr><td>Programmatic runner on the suite's REST API</td><td><code>harness/icg/runner.py</code> driving the unmodified upstream <code>run-test-plan.py</code></td></tr>
+    <tr><td><code>OpenIDConformanceTest</code> TestNG class in each api-testrig</td><td><code>testrig/injicertify/…</code>, <code>testrig/injiverify/…</code> — one TestNG result per conformance module, in the same <code>EmailableReport</code> MOSIP QA already reads</td></tr>
+    <tr><td>Optional combined run</td><td><code>--combined --parallel</code> · <code>run-full-stack-conformance.sh</code></td></tr>
+    <tr><td>Consolidated, benchmark-gated reports</td><td><code>results.json</code> (schemaVersion 1) · HTML/MD/JUnit/badge · verdict diff · exit-code gate (0 pass · 1 regression · 2 infra)</td></tr>
+    <tr><td>CI/CD integration</td><td><a href="https://github.com/aithal007/mosip/actions/workflows/full-stack-conformance.yml"><code>full-stack-conformance.yml</code></a>: unit tests, 3 conformance jobs, nightly schedule catching upstream image changes, Sigstore-signed in-toto attestations over the tested image digests</td></tr>
+  </table>
+</section>
+
+<section id="findings">
+  <h2>Conformance gaps found in Inji 1.0.0-alpha.1</h2>
+  <p style="color:var(--muted)">Each is issue-linked and benchmarked; every report prints the shims next to their tracking issues.</p>
+  <table>
+    <tr><th>#</th><th>Gap</th><th>Spec</th><th>Handling</th></tr>
+    <tr><td>C1</td><td>Credential request with an unrecognised parameter → HTTP 500 (bad error rendering cascades)</td><td>extension params must not break credential processing</td><td><span class="tag known">KNOWN_ISSUE</span></td></tr>
+    <tr><td>C2</td><td>JWT proof with <code>iss = client_id</code> rejected where OID4VCI App. F.1 allows omitting <code>iss</code></td><td>OID4VCI 1.0 App. F.1</td><td><span class="tag known">KNOWN_ISSUE</span></td></tr>
+    <tr><td>C3</td><td>Unknown credential configuration rejected, but without the <code>unknown_credential_configuration</code> error code</td><td>OID4VCI §8.3.1.2</td><td><span class="tag known">KNOWN_ISSUE</span></td></tr>
+    <tr><td>C4</td><td>Access token in URI query not rejected as RFC 6750 requires</td><td>RFC 6750 §2.3 · FAPI 2.0</td><td><span class="tag known">KNOWN_ISSUE</span></td></tr>
+    <tr><td>C5</td><td>Signed issuer metadata (<code>Accept: application/jwt</code>) unsupported</td><td>OID4VCI §12.2.3</td><td><span class="tag known">KNOWN_ISSUE</span></td></tr>
+    <tr><td>C6·C8</td><td>metadata advertised for a nonexistent <code>authorization_endpoint</code>; path-inserted well-known URL not served</td><td>RFC 8414 §2 · OID4VCI §12.2.2 (<a href="https://github.com/inji/inji-certify/issues/967">#967</a>)</td><td>gateway <b>shim</b>, disclosed in every report</td></tr>
+  </table>
+  <div class="card"><h3 style="margin-top:0">Certification readiness, honestly stated</h3>
+  <p style="color:var(--muted);margin:0;font-size:15px"><code>icg readiness</code> reports, one row per capability gap, what still blocks each HAIP profile plan (the ones OpenID self-certification counts): Verify needs <code>direct_post.jwt</code>, <code>x509_hash</code> signed requests and mdoc; Certify needs enforced DPoP, client attestation, the authorization-code flow with PAR, and the path-inserted metadata URL. This is a <b>pre-certification harness</b> — no OpenID certification is claimed anywhere.</p></div>
+</section>
+
+<section id="run">
+  <h2>Run it yourself</h2>
+  <pre><code><span class="c"># Prereqs: Docker Desktop (≥10 GB), Python 3.10+, git, bash</span>
+git clone https://github.com/aithal007/mosip.git && <span class="k">cd</span> mosip
+<span class="g">./run-conformance.sh</span> --component certify       <span class="c"># OID4VCI issuer plan → Inji Certify</span>
+<span class="g">./run-conformance.sh</span> --component verify        <span class="c"># OID4VP verifier plan → Inji Verify</span>
+<span class="g">./run-conformance.sh</span> --combined --parallel     <span class="c"># both, one consolidated report + gate</span>
+
+<span class="c"># open the report</span>
+<span class="y">open results/&lt;run-id&gt;/conformance-report.html</span>
+
+<span class="c"># adversarial probes against a running stack</span>
+<span class="b">python -m</span> icg probe --component certify
+<span class="b">python -m</span> icg readiness     <span class="c"># what blocks HAIP self-certification</span>
+<span class="b">python -m</span> icg selftest      <span class="c"># probe mutation self-test, no Docker needed</span></code></pre>
+  <p style="color:var(--muted)">Exit codes: <span class="g">0</span> gate passed · <span class="y">1</span> regression · <span class="b">2</span> infrastructure error. <code>localhost.emobix.co.uk</code> resolves to 127.0.0.1 via public DNS — no hosts-file edits.</p>
+</section>
+
+<section id="links">
+  <h2>Artifacts &amp; links</h2>
+  <table>
+    <tr><th>Artifact</th><th>Link</th></tr>
+    <tr><td>Consolidated HTML report (sample run)</td><td><a href="demo/conformance-report.html">demo/conformance-report.html</a></td></tr>
+    <tr><td>Machine-readable gate contract</td><td><a href="demo/results.json">demo/results.json</a> · <a href="demo/junit.xml">junit.xml</a> · <a href="demo/badge.svg">badge.svg</a></td></tr>
+    <tr><td>Handoff ledger (every automated wallet action + review evidence)</td><td><a href="demo/handoff-ledger.json">demo/handoff-ledger.json</a></td></tr>
+    <tr><td>Nightly CI, three conformance jobs + attestation</td><td><a href="https://github.com/aithal007/mosip/actions/workflows/full-stack-conformance.yml">workflows/full-stack-conformance.yml</a></td></tr>
+    <tr><td>Hardened-gate pull request (CI green incl. attest on main)</td><td><a href="https://github.com/aithal007/mosip/pull/1">PR #1</a></td></tr>
+    <tr><td>Docs</td><td><a href="https://github.com/aithal007/mosip/tree/main/docs">docs/</a> — architecture · handoff · benchmark · api · testrig integration · certification · findings</td></tr>
+  </table>
+</section>
+
+</main>
+<footer><div class="wrap">
+  <div>MOSIP Decode 2026 · PS-01 · MPL-2.0, consistent with MOSIP and Inji. Upstream suite scripts downloaded at run time, never vendored. Runs against Inji <code>1.0.0-alpha.1</code> and suite <code>release-v5.2.4</code> (pinned in <code>deploy/versions.env</code>).</div>
+  <div style="margin-top:10px">This is a pre-certification harness: it gates regressions and verifies conformance progress; OpenID Foundation certification is a separate, fee-based submission process.</div>
+</div></footer>
+<script>mermaid.initialize({startOnLoad:true,theme:'dark',themeVariables:{fontSize:'14px'}});</script>
+</body>
+</html>

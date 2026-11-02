@@ -1,0 +1,29 @@
+# Fetched at run time (scripts/bootstrap.sh)
+upstream/
+
+# Run outputs (a curated sample lives in docs/sample-run/)
+results/
+*.log
+
+# Generated test TLS material
+deploy/gateway/certs/
+
+# Hackathon brief PDFs kept locally
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# Java
+target/
+
+# Editors / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
