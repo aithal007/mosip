@@ -3,8 +3,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck disable=SC1091
-set -a; source "$ROOT/deploy/versions.env"; set +a
+set -a
+# shellcheck disable=SC1091 # pinned versions, intentionally unscoped
+source "$ROOT/deploy/versions.env"
+set +a
 UPSTREAM="$ROOT/upstream"
 mkdir -p "$UPSTREAM"
 

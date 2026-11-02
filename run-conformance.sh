@@ -71,6 +71,7 @@ COMPOSE=(docker compose --project-directory "$ROOT/deploy" -f "$ROOT/deploy/dock
 PROFILES=()
 for c in "${COMPONENTS[@]}"; do PROFILES+=(--profile "$c"); done
 
+# shellcheck disable=SC2329 # invoked via trap below
 cleanup() {
   if [[ $DOWN -eq 1 && $START -eq 1 ]]; then
     echo "==> stopping stack"
