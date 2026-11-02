@@ -141,8 +141,9 @@ cd testrig/conformance-bridge && mvn -q verify             # Java bridge tests (
 ## Limitations / not done
 
 - The eSignet-backed authorization-code flow for Certify is out of scope; only the pre-authorized-code SD-JWT VC flow is exercised.
-- The GitHub Actions workflow has not been run on `github.com` yet (no remote CI history); it is exercised locally via the same `run-conformance.sh` it calls.
+- Probes have unit tests against a mocked server and a mutation self-test, but a full probe run against a live Inji stack is still pending on the maintainer machine (in progress).
 - `testrig/Dockerfile.conformance-layer` has not been built and pushed as an image; the api-test modules were compiled and verified locally instead (see `docs/TESTRIG_INTEGRATION.md`).
+- A handoff-agent timing race observed only on a Windows host interrupts all `oid4vci-1_0-issuer-fail-*` modules locally (CI passes); tracked with evidence in [aithal007/mosip#2](https://github.com/aithal007/mosip/issues/2).
 
 ## License
 

@@ -29,9 +29,9 @@ cd .. && ./run-conformance.sh --combined --parallel --down
 | Probe self-test: 12/12 mutants caught | **Yes** | `python -m icg selftest` (no Docker). Its first run found a bug in its own reference verifier, which was fixed |
 | Java bridge builds, 7 tests pass | **Yes** | JDK 21.0.13 + Maven 3.9.9, `mvn verify` in `testrig/conformance-bridge` |
 | docker-compose file valid | **Yes** | `docker compose config` with both profiles |
-| Inji Certify: 4 pass / 5 known issue | **No, never run in this work** | The README records it from the original author's run. A Certify run failed twice here: first the C: drive filled up during the image pull, then Docker was left read-only. Needs a machine with enough disk |
-| `icg probe` against a live Inji | **No** | Only tested against mocked servers |
-| GitHub Actions workflow | **No** | Has never run on github.com |
+| Inji Certify: 4 pass / 5 known issue | **Partly — live 2 Nov 2026** | Two live runs on Windows 11. Run 1 hit a stale `certify-db` volume (Certify crash-loop on keymanager init); run 2 after `down --volumes`: clean exit, `metadata-test`/`happy-flow*`/`metadata-test-signed` verdicts matched CI, but all 5 `fail-*` modules INTERRUPTed with a handoff timing race that does not occur in CI (tracked intrarepo as `aithal007/mosip#2`) |
+| `icg probe` against a live Inji | **Pending** | Only tested against mocked servers; live probe run scheduled after the combined run |
+| GitHub Actions workflow | **Yes** | Nightly scheduled runs on `main` green since 24 Oct 2026 (unit + Certify + Verify + Combined + attestation); PR #1 runs the hardened branch, green after fixing shellcheck 0.11 (`SC2329`/`SC1091`) |
 | Java `OpenIDConformanceTest` classes in `testrig/injicertify` and `testrig/injiverify` | **No** | Not compiled; they need MOSIP `apitest-commons` |
 
 ## 3. What changed in this branch
