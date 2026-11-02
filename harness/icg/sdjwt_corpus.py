@@ -6,6 +6,10 @@ does not accept it (typically because it does not trust the generated issuer key
 broken variants prove nothing, and callers must report the run as inconclusive rather
 than as a pass.
 
+Since the Holder's Court work the cases are thin wrappers over the deterministic attack
+operators in :mod:`icg.court.operators`; the legacy case names and sources are unchanged so
+the bench, the probes and the tests keep matching them.
+
 References: RFC 9901 (SD-JWT) sections 4 and 7; OID4VP 1.0 (nonce / aud binding); RFC 8725
 (JWT BCP); CVE-2026-62374 (tampered disclosure silently dropped); CVE-2026-34240 (embedded
 jwk trust).
@@ -78,63 +82,37 @@ class Case:
     presentation: str
 
 
-def _issue(ctx: Context, issuer_key, holder_key, *, payload_extra=None, header_extra=None, sd_alg="sha-256", extra_plain=None, sign_key="issuer"):
-    given, family = disclosure("given_name", "Asha"), disclosure("family_name", "Rao")
-    payload = {
-        "iss": ctx.issuer, "iat": ctx.now - 60, "exp": ctx.now + 3600, "vct": ctx.vct,
-        "cnf": {"jwk": jwk_of(holder_key)},
-        "_sd": sorted([digest(given, sd_alg), digest(family, sd_alg)]), "_sd_alg": sd_alg,
-        **(extra_plain or {}), **(payload_extra or {}),
-    }
-    header = {"alg": "ES256", "typ": "dc+sd-jwt", **(header_extra or {})}
-    jwt = sign_jwt(header, payload, issuer_key if sign_key == "issuer" else None)
-    return jwt, [given, family]
-
-
-def _present(ctx: Context, jwt: str, disclosures: list[str], holder_key, *, kb=True, nonce=None, aud=None, iat=None, typ="kb+jwt", sd_hash_over=None):
-    body = jwt + "~" + "".join(d + "~" for d in disclosures)
-    if not kb:
-        return body
-    hashed = sd_hash_over if sd_hash_over is not None else body
-    claims = {"nonce": nonce or ctx.nonce, "aud": aud or ctx.audience, "iat": iat or ctx.now, "sd_hash": b64u(hashlib.sha256(hashed.encode("ascii")).digest())}
-    return body + sign_jwt({"alg": "ES256", "typ": typ}, claims, holder_key)
+# Legacy case names / descriptions / sources, preserved verbatim for the bench,
+# the probe results and the tests. Each is a single-operator chain.
+LEGACY_CASES: list[tuple[str, list[str], str, str]] = [
+    ("control-valid", [], "Well-formed presentation; must be accepted or the run is inconclusive", "RFC 9901 s7"),
+    ("disclosure-tampered", ["tamper_disclosure"], "A disclosure's bytes changed so its digest is no longer in _sd (must not be silently dropped)", "RFC 9901 s7.1; CVE-2026-62374"),
+    ("disclosure-unreferenced", ["add_unreferenced_disclosure"], "Extra disclosure not referenced by any digest", "RFC 9901 s7.1"),
+    ("disclosure-duplicated", ["duplicate_disclosure"], "Same disclosure sent twice", "RFC 9901 s7.1"),
+    ("kb-missing", ["strip_kb"], "No key-binding JWT although cnf is present", "RFC 9901 s7.3"),
+    ("kb-wrong-nonce", ["kb_nonce"], "KB-JWT nonce differs from the request nonce (replay)", "OID4VP 1.0 s14.1"),
+    ("kb-wrong-aud", ["kb_aud"], "KB-JWT audience is not the verifier", "OID4VP 1.0 s14.1"),
+    ("kb-stale-iat", ["kb_iat"], "KB-JWT issued a day ago", "RFC 9901 s7.3"),
+    ("kb-wrong-sd-hash", ["kb_sd_hash"], "sd_hash computed over a different presentation", "RFC 9901 s4.3.1"),
+    ("kb-wrong-typ", ["kb_typ"], "KB-JWT typ is not kb+jwt", "RFC 9901 s4.3"),
+    ("kb-wrong-key", ["kb_wrong_key"], "KB-JWT signed by a key other than cnf.jwk", "RFC 9901 s7.3"),
+    ("issuer-alg-none", ["issuer_alg_none"], "Issuer JWT with alg=none", "RFC 8725 s3.2"),
+    ("issuer-embedded-jwk", ["issuer_embedded_jwk"], "Issuer JWT verifiable only through a jwk header the attacker supplied", "RFC 8725 s3.8; CVE-2026-34240"),
+    ("issuer-expired", ["issuer_exp"], "Credential exp in the past", "RFC 7519 s4.1.4"),
+    ("sd-alg-md5", ["sd_alg"], "_sd_alg is a weak hash outside the allow-list", "RFC 9901 s4.1.1"),
+    ("claim-name-collision", ["claim_collision"], "Selectively disclosable claim also present in plaintext", "RFC 9901 s7.1"),
+]
 
 
 def build_cases(ctx: Context, issuer_key: ec.EllipticCurvePrivateKey | None = None) -> list[Case]:
-    issuer_key = issuer_key or ec.generate_private_key(ec.SECP256R1())
-    holder_key, other_key = (ec.generate_private_key(ec.SECP256R1()) for _ in range(2))
-    jwt, discs = _issue(ctx, issuer_key, holder_key)
-    cases: list[Case] = []
+    """The 16 legacy cases, now built through the Court's deterministic attack grammar."""
+    from .court.operators import build_attack  # deferred: operators imports this module's helpers
 
-    def add(name, description, source, presentation, expect="reject"):
-        cases.append(Case(name, description, source, expect, presentation))
-
-    add("control-valid", "Well-formed presentation; must be accepted or the run is inconclusive", "RFC 9901 s7", _present(ctx, jwt, discs, holder_key), expect="accept")
-
-    salt, name, _value = json.loads(base64.urlsafe_b64decode(discs[0] + "=" * (-len(discs[0]) % 4)))
-    flipped = disclosure(name, "Mallory", salt)  # same salt and claim, different value: digest no longer matches
-    add("disclosure-tampered", "A disclosure's bytes changed so its digest is no longer in _sd (must not be silently dropped)", "RFC 9901 s7.1; CVE-2026-62374", _present(ctx, jwt, [flipped, discs[1]], holder_key))
-    add("disclosure-unreferenced", "Extra disclosure not referenced by any digest", "RFC 9901 s7.1", _present(ctx, jwt, discs + [disclosure("role", "admin")], holder_key))
-    add("disclosure-duplicated", "Same disclosure sent twice", "RFC 9901 s7.1", _present(ctx, jwt, discs + [discs[0]], holder_key))
-    add("kb-missing", "No key-binding JWT although cnf is present", "RFC 9901 s7.3", _present(ctx, jwt, discs, holder_key, kb=False))
-    add("kb-wrong-nonce", "KB-JWT nonce differs from the request nonce (replay)", "OID4VP 1.0 s14.1", _present(ctx, jwt, discs, holder_key, nonce="replayed-" + secrets.token_hex(4)))
-    add("kb-wrong-aud", "KB-JWT audience is not the verifier", "OID4VP 1.0 s14.1", _present(ctx, jwt, discs, holder_key, aud="https://evil.example"))
-    add("kb-stale-iat", "KB-JWT issued a day ago", "RFC 9901 s7.3", _present(ctx, jwt, discs, holder_key, iat=ctx.now - 86400))
-    add("kb-wrong-sd-hash", "sd_hash computed over a different presentation", "RFC 9901 s4.3.1", _present(ctx, jwt, discs, holder_key, sd_hash_over=jwt + "~"))
-    add("kb-wrong-typ", "KB-JWT typ is not kb+jwt", "RFC 9901 s4.3", _present(ctx, jwt, discs, holder_key, typ="JWT"))
-    add("kb-wrong-key", "KB-JWT signed by a key other than cnf.jwk", "RFC 9901 s7.3", _present(ctx, jwt, discs, other_key))
-
-    none_jwt, none_discs = _issue(ctx, issuer_key, holder_key, header_extra={"alg": "none"}, sign_key="none")
-    add("issuer-alg-none", "Issuer JWT with alg=none", "RFC 8725 s3.2", _present(ctx, none_jwt, none_discs, holder_key))
-    embedded, embedded_discs = _issue(ctx, other_key, holder_key, header_extra={"jwk": jwk_of(other_key)})
-    add("issuer-embedded-jwk", "Issuer JWT verifiable only through a jwk header the attacker supplied", "RFC 8725 s3.8; CVE-2026-34240", _present(ctx, embedded, embedded_discs, holder_key))
-    expired, expired_discs = _issue(ctx, issuer_key, holder_key, payload_extra={"exp": ctx.now - 3600})
-    add("issuer-expired", "Credential exp in the past", "RFC 7519 s4.1.4", _present(ctx, expired, expired_discs, holder_key))
-    md5_jwt, md5_discs = _issue(ctx, issuer_key, holder_key, sd_alg="md5")
-    add("sd-alg-md5", "_sd_alg is a weak hash outside the allow-list", "RFC 9901 s4.1.1", _present(ctx, md5_jwt, md5_discs, holder_key))
-    collide, collide_discs = _issue(ctx, issuer_key, holder_key, extra_plain={"given_name": "Mallory"})
-    add("claim-name-collision", "Selectively disclosable claim also present in plaintext", "RFC 9901 s7.1", _present(ctx, collide, collide_discs, holder_key))
-    return cases
+    seed = secrets.randbits(48)
+    return [
+        build_attack(chain, ctx, seed, issuer_key=issuer_key, name=name, description=description, source=source)
+        for name, chain, description, source in LEGACY_CASES
+    ]
 
 
 def decode_presentation(presentation: str) -> dict:

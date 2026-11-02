@@ -1,0 +1,35 @@
+{
+  "clause": "RFC 9901 s5.1.1.1; RFC 8725 s3.8 (kid is attacker-influenceable header input)",
+  "confirmed_by": "human:2026-11-02",
+  "context": {
+    "audience": "redirect_uri:https://verify.inji.test/v1/verify/vp-submission/direct-post",
+    "nonce": "court-fixture-nonce-01",
+    "now": 1800000000
+  },
+  "expected": {
+    "alg-allowlist-strict": "reject",
+    "disclosures-match": "reject",
+    "issuer-expiry": "reject",
+    "issuer-signature": "reject",
+    "kb-audience": "reject",
+    "kb-binding-not-optional": "reject",
+    "kb-freshness": "reject",
+    "kb-nonce": "reject",
+    "kb-required": "reject",
+    "kb-sd-hash": "reject",
+    "kb-signature": "reject",
+    "kb-typ": "reject",
+    "kid-pinning": "accept",
+    "no-claim-collision": "reject",
+    "salt-uniqueness": "reject",
+    "sd-alg-allowlist": "reject",
+    "sd-array-unique": "reject"
+  },
+  "id": "hc-01-kid-pinning",
+  "operator_chain": [
+    "kid_injection"
+  ],
+  "presentation_sha256": "2a67dcf24fa8d051ba14909267679555ce9ad203c89ad5e4c7702e7bf7b71272",
+  "seed": 11,
+  "source": "human"
+}

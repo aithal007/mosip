@@ -79,6 +79,7 @@ class ModuleResult:
     requirements: list[str] = field(default_factory=list)
     counts: dict[str, int] = field(default_factory=dict)
     review_evidence: dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
 
     @property
     def key(self) -> str:

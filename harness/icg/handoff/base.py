@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ..adapter_protocol import ProtocolClient, SubprocessAdapter
 from ..settings import Settings
 from ..suite_api import SuiteApi
 
@@ -124,3 +125,136 @@ class HandoffAdapter:
             for entry in ctx.api.image_placeholders(ctx.module_id)
             if entry.get("upload") and not entry.get("img")
         ]
+
+
+# ---------------------------------------------------------------------------
+# Protocol adapter bridge
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class ProtocolAction:
+    """An action the agent should perform on behalf of a protocol adapter."""
+
+    type: str  # "visit" | "upload_image" | "append_event" | "set_ledger"
+    data: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ProtocolExecuteResult:
+    """Result returned by a protocol adapter's execute operation."""
+
+    handled: bool
+    ledger_updates: dict[str, Any] = field(default_factory=dict)
+    actions: list[ProtocolAction] = field(default_factory=list)
+
+
+class ProtocolHandoffAdapter(HandoffAdapter):
+    """A :class:`HandoffAdapter` that delegates to a protocol adapter client.
+
+    The protocol adapter (possibly in another language/process) owns the
+    component-specific handoff logic. The bridge translates between the
+    :class:`HandoffContext`-based in-process API and the NDJSON protocol.
+
+    Suite API calls (visit, upload_image) and ledger mutations are performed by
+    the agent through this bridge, so the protocol adapter never needs direct
+    access to the suite or ledger objects.
+    """
+
+    def __init__(self, settings: Settings, client: ProtocolClient):
+        super().__init__(settings)
+        self._client = client
+
+    def applies_to(self, test_name: str) -> bool:
+        return test_name.startswith(self._client.capabilities.component + "-")
+
+    def on_waiting(self, ctx: HandoffContext) -> None:
+        state = ctx.ledger.get(ctx.module_id)
+        if state.get("lastHandledUpdate") == ctx.updated:
+            return
+
+        # Ask the protocol adapter what to do for this WAITING state.
+        try:
+            result = self._client.execute_step(
+                module_id=ctx.module_id,
+                test_name=ctx.test_name,
+                status=ctx.status,
+                ledger_state=state,
+            )
+        except Exception as exc:  # adapter error -> retry on next poll
+            log.error(
+                "[%s] %s: protocol adapter execute failed: %s",
+                ctx.module_id,
+                ctx.test_name,
+                exc,
+            )
+            ctx.ledger.update(ctx.module_id, lastError=str(exc))
+            return
+
+        parsed = self._parse_execute_result(result)
+
+        # Apply ledger updates first
+        if parsed.ledger_updates:
+            ctx.ledger.update(ctx.module_id, **parsed.ledger_updates)
+
+        # Execute actions through the agent (suite API access stays in-process)
+        for action in parsed.actions:
+            self._execute_action(ctx, action)
+
+        # Check for pending review placeholders (adapter may not have resolved them)
+        pending = self._pending_placeholders(ctx)
+        if pending and not any(a.type == "upload_image" for a in parsed.actions):
+            for placeholder in pending:
+                self.resolve_review(ctx, placeholder)
+
+        if parsed.handled:
+            ctx.ledger.update(
+                ctx.module_id, lastHandledUpdate=ctx.updated, testName=ctx.test_name
+            )
+
+    def _parse_execute_result(self, result: Any) -> ProtocolExecuteResult:
+        if isinstance(result, dict):
+            handled = bool(result.get("handled", False))
+            updates = result.get("ledger_updates", {}) or {}
+            actions = [
+                ProtocolAction(type=str(a.get("type", "")), data=a.get("data", {}) or {})
+                for a in (result.get("actions") or [])
+            ]
+            return ProtocolExecuteResult(handled=handled, ledger_updates=updates, actions=actions)
+        # Backward compat: raw bool means handled
+        return ProtocolExecuteResult(handled=bool(result))
+
+    def _execute_action(self, ctx: HandoffContext, action: ProtocolAction) -> None:
+        if action.type == "visit":
+            url = str(action.data.get("url", ""))
+            if url:
+                response = ctx.api.visit(url)
+                ctx.ledger.append_event(
+                    ctx.module_id,
+                    {
+                        "action": "protocol-visit",
+                        "url": url,
+                        "suiteHttpStatus": response.status_code,
+                    },
+                )
+        elif action.type == "upload_image":
+            placeholder = str(action.data.get("placeholder", ""))
+            data_url = str(action.data.get("data_url", ""))
+            if placeholder and data_url:
+                ctx.api.upload_placeholder_image(ctx.module_id, placeholder, data_url)
+                ctx.ledger.append_event(
+                    ctx.module_id,
+                    {"action": "protocol-upload-image", "placeholder": placeholder},
+                )
+        elif action.type == "append_event":
+            ctx.ledger.append_event(ctx.module_id, action.data.get("event", {}))
+        elif action.type == "set_ledger":
+            ctx.ledger.update(ctx.module_id, **action.data.get("values", {}))
+        else:
+            log.warning("unknown protocol action type: %s", action.type)
+
+    def shutdown(self) -> None:
+        try:
+            self._client.shutdown()
+        except Exception:  # noqa: BLE001
+            log.warning("protocol client shutdown raised, ignoring")

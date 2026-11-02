@@ -13,7 +13,7 @@ import threading
 import time
 import traceback
 
-from .handoff import HandoffAdapter, HandoffContext, Ledger
+from .handoff import HandoffAdapter, HandoffContext, Ledger, ProtocolHandoffAdapter
 from .settings import Settings
 from .suite_api import SuiteApi
 
@@ -38,6 +38,12 @@ class HandoffAgent:
     def __exit__(self, *exc: object) -> None:
         self._stop.set()
         self._thread.join(timeout=15)
+        for adapter in self.adapters:
+            if isinstance(adapter, ProtocolHandoffAdapter):
+                try:
+                    adapter.shutdown()
+                except Exception:  # noqa: BLE001
+                    log.warning("adapter shutdown raised, ignoring")
         self._api.close()
 
     def _adapter_for(self, test_name: str) -> HandoffAdapter | None:

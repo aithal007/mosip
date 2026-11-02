@@ -22,11 +22,16 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
 RULES = [
-    "issuer-signature",       # alg allow-list + signature by a trusted key (no alg=none, no embedded jwk)
+    "issuer-signature",       # signature by a trusted issuer key (no attacker-signed issuer JWT)
+    "alg-allowlist-strict",   # alg header must be exactly ES256 (no alg=none, no HS confusion relabels)
+    "kid-pinning",            # a kid header, if present, must name the pinned trusted issuer key
     "issuer-expiry",
     "sd-alg-allowlist",
+    "sd-array-unique",        # no digest repeated inside the _sd array
     "disclosures-match",      # every disclosure referenced exactly once
+    "salt-uniqueness",        # no two disclosures share a salt
     "no-claim-collision",
+    "kb-binding-not-optional",  # a credential without cnf is not holder-bound at all
     "kb-required",
     "kb-typ",
     "kb-signature",
@@ -37,6 +42,7 @@ RULES = [
 ]
 ALLOWED_SD_ALGS = {"sha-256"}
 KB_MAX_AGE = 300
+TRUSTED_KID = "icg-issuer-1"  # the pinned issuer key id
 
 
 def _unb64(s: str) -> bytes:
@@ -84,26 +90,37 @@ class ReferenceVerifier:
         jwt, disclosures, kb = parts[0], [p for p in parts[1:-1] if p], parts[-1]
         header, payload, _, _ = _split(jwt)
 
-        self._check("issuer-signature", header.get("alg") == "ES256" and _sig_ok(jwt, self.issuer_key), "bad alg or signature")
+        self._check("issuer-signature", _sig_ok(jwt, self.issuer_key), "not signed by the trusted issuer key")
+        self._check("alg-allowlist-strict", header.get("alg") == "ES256", f"alg {header.get('alg')}")
+        self._check("kid-pinning", header.get("kid", TRUSTED_KID) == TRUSTED_KID, "issuer kid is not the pinned trusted key")
         self._check("issuer-expiry", payload.get("exp", 0) > now, "expired")
         sd_alg = payload.get("_sd_alg", "sha-256")
         self._check("sd-alg-allowlist", sd_alg in ALLOWED_SD_ALGS, f"_sd_alg {sd_alg}")
 
         digests = set(payload.get("_sd", []))
+        self._check("sd-array-unique", len(digests) == len(payload.get("_sd", [])), "duplicate digest in _sd")
         seen: list[str] = []
         for d in disclosures:
             hasher = {"sha-256": hashlib.sha256, "md5": hashlib.md5}.get(sd_alg, hashlib.sha256)
             seen.append(_b64u(hasher(d.encode("ascii")).digest()))
         self._check("disclosures-match", all(s in digests for s in seen) and len(set(seen)) == len(seen), "unreferenced, tampered or duplicate disclosure")
-        names = set()
+        names: set[str] = set()
+        salts: set[str] = set()
+        decoded_count = 0
         for d in disclosures:
             try:
                 decoded = json.loads(_unb64(d))
                 names.add(decoded[1])
+                salts.add(decoded[0])
+                decoded_count += 1
             except (ValueError, IndexError, TypeError):
                 pass
+        self._check("salt-uniqueness", len(salts) == decoded_count, "two disclosures share one salt")
         self._check("no-claim-collision", not (names & set(payload)), "claim in plaintext and disclosure")
 
+        self._check("kb-binding-not-optional", bool(payload.get("cnf")), "issuer payload carries no holder binding (cnf)")
+        if not payload.get("cnf"):
+            return
         self._check("kb-required", bool(kb), "key binding JWT missing")
         if not kb:
             return

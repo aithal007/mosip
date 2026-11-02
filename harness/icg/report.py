@@ -188,15 +188,25 @@ def html_report(run: RunResult, diff: RunDiff | None = None, manifests: list[Com
     parts.append("<h2>Test modules</h2><div class=toolbar>")
     for key, label in (("ALL", "All"), ("BLOCKING", "Blocking"), *((v.value, VERDICT_LABEL[v.value]) for v in Verdict)):
         parts.append(f"<button data-filter='{key}' aria-pressed='{'true' if key == 'ALL' else 'false'}'>{label}</button>")
-    parts.append("</div><div class=tablewrap><table><thead><tr><th>Component</th><th>Module</th><th>Suite</th><th>Verdict</th><th>Reason</th><th>Time</th></tr></thead><tbody>")
+    parts.append("</div><div class=tablewrap><table><thead><tr><th>Component</th><th>Module</th><th>Suite</th><th>Verdict</th><th>Reason</th><th>Time</th><th>Evidence</th></tr></thead><tbody>")
     for m in sorted(run.modules, key=lambda m: (not Verdict(m.verdict).is_blocking, m.component, m.module_name)):
         findings = "".join(f"<li><b>{e(f.result)}</b> <code>{e(f.condition)}</code> — {e(f.message)}</li>" for f in m.findings[:12])
         details = f"<details><summary>{len(m.findings)} finding(s)</summary><ul class=find>{findings}</ul></details>" if m.findings else ""
         issue = "".join(f" <a href='{e(i.strip())}'>issue</a>" for i in m.issue.split(",") if i.strip())
         name = f"<a href='{e(m.log_url)}'><code>{e(m.module_name)}</code></a>" if m.log_url else f"<code>{e(m.module_name)}</code>"
+        evidence = ""
+        if m.evidence:
+            ev_parts = []
+            if m.evidence.get("bundlePath"):
+                ev_parts.append(f"<a href='{e(m.evidence['bundlePath'])}'>evidence</a>")
+            if m.evidence.get("transactionId"):
+                ev_parts.append(f"tx:{e(m.evidence['transactionId'])}")
+            if m.evidence.get("requestId"):
+                ev_parts.append(f"req:{e(m.evidence['requestId'])}")
+            evidence = " ".join(ev_parts)
         parts.append(
             f"<tr data-verdict='{m.verdict}'><td>{e(m.component)}</td><td>{name}{details}</td><td>{e(m.suite_result or m.status)}</td>"
-            f"<td><span class='chip {m.verdict}'>{VERDICT_LABEL[m.verdict]}</span></td><td>{e(m.verdict_reason)}{issue}</td><td>{m.duration_seconds:.0f}s</td></tr>"
+            f"<td><span class='chip {m.verdict}'>{VERDICT_LABEL[m.verdict]}</span></td><td>{e(m.verdict_reason)}{issue}</td><td>{m.duration_seconds:.0f}s</td><td>{evidence}</td></tr>"
         )
     parts.append("</tbody></table></div>")
 

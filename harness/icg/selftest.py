@@ -12,11 +12,12 @@ with the reference and the score means nothing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 from cryptography.hazmat.primitives.asymmetric import ec
 
+from .court.fixtures import Fixture, FixtureResult, load_fixtures, replay
 from .probe import probe_sdjwt_corpus
 from .refverifier import RULES, MockInjiVerify, ReferenceVerifier
 from .settings import Settings
@@ -34,6 +35,7 @@ class SelfTestReport:
     baseline_clean: bool
     baseline_detail: str
     mutants: list[MutantResult]
+    fixture_results: list[FixtureResult] = field(default_factory=list)
 
     @property
     def kill_rate(self) -> float:
@@ -56,25 +58,45 @@ def _run(settings: Settings, disabled: frozenset[str]):
 
 
 def run_selftest(settings: Settings) -> SelfTestReport:
+    """Mutation score = mutants killed by the probe corpus + by the Court's frozen fixtures.
+
+    A fixture with ``rule == R`` kills mutant R by definition: it freezes, byte-exactly,
+    a presentation the strict reference rejects and every other mutant accepts. A fixture
+    that no longer replays (operator or verifier drift) makes the whole selftest fail,
+    because only deterministic, reproduced findings count.
+    """
+    fixture_results = replay(load_fixtures())
+    fixture_killers: dict[str, list[str]] = {}
+    for fix, result in zip(load_fixtures(), fixture_results):
+        if result.ok and fix.rule:
+            fixture_killers.setdefault(fix.rule, []).append(f"fixture:{fix.id}")
+
     baseline = _run(settings, frozenset())
-    clean = bool(baseline) and all(r.status == "PASS" for r in baseline)
+    clean = bool(baseline) and all(r.status == "PASS" for r in baseline) and all(fr.ok for fr in fixture_results)
+    detail = f"{len(baseline)} probes + {len(fixture_results)} fixtures"
     mutants = []
     for rule in RULES:
         caught = [r.name for r in _run(settings, frozenset({rule})) if r.status == "FAIL"]
-        mutants.append(MutantResult(rule, bool(caught), caught))
-    return SelfTestReport(clean, f"{len(baseline)} probes", mutants)
+        by_fixture = fixture_killers.get(rule, [])
+        mutants.append(MutantResult(rule, bool(caught or by_fixture), caught + by_fixture))
+    return SelfTestReport(clean, detail, mutants, fixture_results)
 
 
 def to_markdown(report: SelfTestReport) -> str:
     lines = [
         "## Probe self-test (mutation score)",
         "",
-        f"Strict reference verifier: {'all probes PASS' if report.baseline_clean else 'PROBES DISAGREE WITH REFERENCE'} ({report.baseline_detail}).",
-        f"**Mutants caught: {sum(m.killed for m in report.mutants)}/{len(report.mutants)} ({report.kill_rate:.0%})**",
+        f"Strict reference verifier: {'all probes PASS, all fixtures replay' if report.baseline_clean else 'PROBES/FIXTURES DISAGREE WITH REFERENCE'} ({report.baseline_detail}).",
+        f"**Mutants caught: {sum(m.killed for m in report.mutants)}/{len(report.mutants)} ({report.kill_rate:.0%})**"
+        + ("" if report.baseline_clean else " - score meaningless until baseline is clean"),
         "",
         "| Rule disabled | Caught | By probe(s) |",
         "|---|---|---|",
     ]
     for m in report.mutants:
         lines.append(f"| `{m.rule}` | {'yes' if m.killed else '**NO - blind spot**'} | {', '.join(m.caught_by) or '-'} |")
+    failed_fixtures = [fr.id for fr in report.fixture_results if not fr.ok]
+    if failed_fixtures:
+        lines.append("")
+        lines.append(f"**Frozen fixtures that no longer replay: {', '.join(failed_fixtures)}**")
     return "\n".join(lines)

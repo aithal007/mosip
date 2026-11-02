@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .benchmark import Benchmark, classify
+from .evidence_recorder import EvidenceRecorder
 from .handoff import Ledger
 from .model import Finding, ModuleResult, PlanRun
 from .settings import Settings
@@ -65,6 +66,7 @@ def collect_plan(
     benchmark: Benchmark,
     ledger: Ledger,
     settings: Settings,
+    evidence_recorder: EvidenceRecorder | None = None,
 ) -> list[ModuleResult]:
     if not plan.plan_id:
         return []
@@ -105,6 +107,22 @@ def collect_plan(
                 counts=counts,
                 review_evidence=dict(ledger_state.get(module_id, {}).get("reviewEvidence", {})),
             )
+            # Attach evidence info from the handoff ledger and recorder
+            ledger_entry = ledger_state.get(module_id, {})
+            evidence: dict[str, Any] = {}
+            if ledger_entry.get("reviewEvidence"):
+                evidence["review"] = ledger_entry["reviewEvidence"]
+            if ledger_entry.get("injiTransactionId"):
+                evidence["transactionId"] = ledger_entry["injiTransactionId"]
+            if ledger_entry.get("injiRequestId"):
+                evidence["requestId"] = ledger_entry["injiRequestId"]
+            if ledger_entry.get("offersDelivered"):
+                evidence["offersDelivered"] = ledger_entry["offersDelivered"]
+            if evidence_recorder is not None:
+                bundle = evidence_recorder.bundle_for(module_id, plan.component)
+                evidence["bundlePath"] = f"evidence/{module_id}.json"
+                evidence["entryCount"] = len(bundle.entries)
+            result.evidence = evidence
         classify(result, plan.config_file, benchmark, review_policy=settings.review_policy, warning_policy=settings.warning_policy)
         modules.append(result)
     return modules

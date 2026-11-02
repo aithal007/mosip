@@ -1,0 +1,35 @@
+{
+  "clause": "RFC 9901 s7.3; OID4VP 1.0 s14.1 (holder binding is not optional when cnf is absent)",
+  "confirmed_by": "human:2026-11-02",
+  "context": {
+    "audience": "redirect_uri:https://verify.inji.test/v1/verify/vp-submission/direct-post",
+    "nonce": "court-fixture-nonce-01",
+    "now": 1800000000
+  },
+  "expected": {
+    "alg-allowlist-strict": "reject",
+    "disclosures-match": "reject",
+    "issuer-expiry": "reject",
+    "issuer-signature": "reject",
+    "kb-audience": "reject",
+    "kb-binding-not-optional": "accept",
+    "kb-freshness": "reject",
+    "kb-nonce": "reject",
+    "kb-required": "reject",
+    "kb-sd-hash": "reject",
+    "kb-signature": "reject",
+    "kb-typ": "reject",
+    "kid-pinning": "reject",
+    "no-claim-collision": "reject",
+    "salt-uniqueness": "reject",
+    "sd-alg-allowlist": "reject",
+    "sd-array-unique": "reject"
+  },
+  "id": "hc-04-kb-binding-not-optional",
+  "operator_chain": [
+    "strip_cnf_reliance"
+  ],
+  "presentation_sha256": "8bce4ace992c6eed1c5a8373b1e48f1367b0b87aec68b40a3979c3ae53d81dd4",
+  "seed": 14,
+  "source": "human"
+}

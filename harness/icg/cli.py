@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import shutil
 import sys
 import threading
@@ -23,7 +24,14 @@ from .attest import build_statement, parse_subjects
 from .benchmark import Benchmark
 from .collect import collect_plan, utc_now
 from .diff import diff_runs
-from .handoff import ADAPTERS, Ledger
+from .handoff import (
+    ADAPTERS,
+    Ledger,
+    ProtocolClient,
+    ProtocolHandoffAdapter,
+    SubprocessAdapter,
+    PROTOCOL_HANDLERS,
+)
 from .manifest import ComponentManifest
 from .model import RunResult
 from .readiness import readiness_markdown
@@ -32,6 +40,9 @@ from .runner import ComponentRun, run_component
 from .seed import seed_certify, suggest_benchmark
 from .settings import REPO_ROOT, Settings
 from .suite_api import SuiteApi
+from .suite_version import check_suite_version, SuiteVersionMismatch
+from .evidence_recorder import EvidenceRecorder
+from .certify_package import command_certify_package
 
 log = logging.getLogger("icg")
 COMPONENTS = ("certify", "verify")
@@ -87,12 +98,104 @@ def command_run(args: argparse.Namespace) -> int:
 
     if not args.skip_wait and not wait_until_ready(settings, components, args.wait_timeout):
         return 2
+
+    # Suite version compatibility check: fail fast if the running suite tag
+    # doesn't match the pinned CONFORMANCE_SUITE_VERSION.
+    try:
+        actual_tag = check_suite_version(settings.conformance_server, settings.suite_version, settings.conformance_token)
+        if actual_tag:
+            run_environment_suite_tag = actual_tag
+    except SuiteVersionMismatch as exc:
+        log.error("%s", exc)
+        return 2
+
     if "certify" in components and not args.no_seed and not seed_certify(settings):
         return 2
 
     started = utc_now()
     ledger = Ledger(run_dir / "handoff-ledger.json")
-    adapters = [ADAPTERS[c](settings) for c in components]
+    evidence_recorder = EvidenceRecorder(run_dir / "evidence")
+    # Protocol-based adapters (language-agnostic NDJSON protocol). Each handler
+    # runs in-process by default; set ICG_ADAPTER_SUBPROCESS=1 to run as a subprocess.
+    use_subprocess = os.environ.get("ICG_ADAPTER_SUBPROCESS", "").strip() == "1"
+    adapters: list = []
+    for c in components:
+        handler_cls = PROTOCOL_HANDLERS[c]
+        handler = handler_cls(settings, haip=args.haip)
+        if use_subprocess:
+            cmd = [sys.executable, "-m", "icg.adapter_protocol_server", c]
+            if args.haip:
+                cmd.append("--haip")
+            client = ProtocolClient(
+                SubprocessAdapter(
+                    command=cmd,
+                    cwd=REPO_ROOT / "harness",
+                    env={**os.environ, "PYTHONPATH": str(REPO_ROOT / "harness")},
+                )
+            )
+        else:
+            # In-process protocol client that dispatches directly to the handler
+            from .adapter_protocol import run_in_process
+
+            class _InProcessClient:
+                def __init__(self, handler: Any, haip: bool = False):
+                    self._handler = handler
+                    self._caps = None
+                    self._haip = haip
+
+                @property
+                def capabilities(self):
+                    if self._caps is None:
+                        import json as _json
+                        self._caps = type(
+                            "Caps",
+                            (),
+                            {
+                                "protocol": 1,
+                                "component": self._handler.component,
+                                "version": self._handler.version,
+                                "ops": ["init", "execute", "shutdown", "resolve_review"],
+                                "raw": self._handler.capabilities(),
+                            },
+                        )()
+                    return self._caps
+
+                def init_component(self, settings: Any) -> None:
+                    self._handler.init({"haip": self._haip})
+
+                def execute_step(
+                    self,
+                    module_id: str,
+                    test_name: str,
+                    status: dict[str, Any],
+                    ledger_state: dict[str, Any],
+                ) -> dict[str, Any]:
+                    import io as _io
+
+                    req = {
+                        "id": 1,
+                        "op": "execute",
+                        "params": {
+                            "module_id": module_id,
+                            "test_name": test_name,
+                            "status": status,
+                            "ledger": ledger_state,
+                        },
+                    }
+                    out = _io.StringIO()
+                    run_in_process(self._handler, stdin=_io.StringIO(json.dumps(req) + "\n"), stdout=out)
+                    line = out.getvalue().strip()
+                    resp = json.loads(line)
+                    if not resp.get("ok", False):
+                        raise RuntimeError(f"adapter execute failed: {resp.get('error_code')} {resp.get('message')}")
+                    return resp.get("result") or {}
+
+                def shutdown(self) -> None:
+                    self._handler.shutdown()
+
+            client = _InProcessClient(handler, haip=args.haip)
+        client.init_component(settings)
+        adapters.append(ProtocolHandoffAdapter(settings, client))
     component_runs: list[ComponentRun] = []
 
     with HandoffAgent(settings, adapters, ledger):
@@ -142,9 +245,17 @@ def command_run(args: argparse.Namespace) -> int:
             for plan in component_run.plans:
                 run.plans.append(plan)
                 try:
-                    run.modules.extend(collect_plan(api, plan, benchmark, ledger, settings))
+                    run.modules.extend(collect_plan(api, plan, benchmark, ledger, settings, evidence_recorder=evidence_recorder))
                 except Exception as exc:  # a broken plan must not hide the others
                     log.error("Collecting plan %s failed: %s", plan.plan_id, exc)
+
+    evidence_paths = evidence_recorder.write_all()
+    if evidence_paths:
+        log.info("wrote %d evidence bundle(s)", len(evidence_paths))
+        bad = evidence_recorder.verify_all()
+        if bad:
+            for module_id, bad_steps in bad.items():
+                log.warning("evidence hash mismatch for %s: %s", module_id, ", ".join(bad_steps))
 
     results_path = run_dir / "results.json"
     run.write(results_path)
@@ -233,6 +344,78 @@ def command_selftest(args: argparse.Namespace) -> int:
     return 0 if report.baseline_clean and not report.survivors else 1
 
 
+def command_matrix(args: argparse.Namespace) -> int:
+    """Run conformance matrix across multiple spec versions."""
+    from .matrix import run_matrix, matrix_to_markdown, matrix_to_json
+
+    settings = Settings.from_env()
+    components = _components(args)
+    versions = [v.strip() for v in args.matrix.split(",") if v.strip()]
+    if len(versions) < 2:
+        log.error("--matrix requires at least two spec versions (comma-separated)")
+        return 2
+
+    out_root = Path(args.out).resolve()
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:17]
+    run_dir = out_root / f"matrix-{run_id}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    results = run_matrix(settings, components, versions, run_dir, args)
+
+    print(matrix_to_markdown(results))
+
+    # Write JSON output
+    matrix_json = run_dir / "matrix-results.json"
+    matrix_json.write_text(matrix_to_json(results), encoding="utf-8")
+    print(f"matrix  : {matrix_json}")
+
+    # Exit 1 if any migration regressions or gate failures
+    any_fail = False
+    for component, matrix_result in results.items():
+        if not matrix_result.all_passing:
+            any_fail = True
+        if matrix_result.has_migration_regressions:
+            any_fail = True
+    return 1 if any_fail else 0
+
+
+# -- court -------------------------------------------------------------------------------
+
+def command_court_replay(args: argparse.Namespace) -> int:
+    from .court.fixtures import load_fixtures, replay
+
+    fixtures = load_fixtures()
+    results = replay(fixtures)
+    print(f"Court fixture replay: {sum(r.ok for r in results)}/{len(fixtures)} replay PASS")
+    for result in results:
+        problem = "" if result.ok else " - " + "; ".join(result.problems)
+        print(f"  {result.status}  {result.id} (rule: {result.rule or '-'}){problem}")
+    return 0 if all(r.ok for r in results) and fixtures else 1
+
+
+def command_court_promote(args: argparse.Namespace) -> int:
+    """Promote ONE pending draft at a time; a human is the gate. Refuses drafts that no
+    longer replay, because CI only accepts reproduced findings."""
+    from .court.fixtures import FIXTURE_DIR, PENDING_DIR, load_dir, replay, write_fixture
+
+    pending = load_dir(PENDING_DIR)
+    drafts = [f for f in pending if f.id == args.id]
+    if not drafts:
+        available = ", ".join(f.id for f in pending) or "none"
+        log.error("pending draft %r not found in %s (pending: %s)", args.id, PENDING_DIR, available)
+        return 2
+    draft = drafts[0]
+    result = replay([draft])[0]
+    if not result.ok and not args.force:
+        log.error("draft %s does not replay cleanly; refusing to promote: %s", draft.id, "; ".join(result.problems))
+        return 1
+    draft.path = None
+    path = write_fixture(draft, FIXTURE_DIR)
+    draft.path.unlink()  # remove the pending copy so it cannot be promoted twice
+    print(f"promoted {draft.id} -> {path}")
+    return command_court_replay(args)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="icg", description="Inji Conformance Gate")
     parser.add_argument("--version", action="version", version=__version__)
@@ -254,6 +437,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--no-seed", action="store_true", help="do not register the SD-JWT credential config in Certify")
     run.add_argument("--wait-timeout", type=int, default=900)
     run.add_argument("--plan-timeout", type=int, default=3600)
+    run.add_argument("--haip", action="store_true", help="enable HAIP certification features (x509_hash, JAR, encrypted responses, DPoP, client attestation, mTLS)")
+    run.add_argument("--matrix", help="run matrix across spec versions (comma-separated, e.g. oid4vp-draft23,oid4vp-draft24,oid4vp-1final)")
     run.set_defaults(func=command_run)
 
     wait = sub.add_parser("wait", help="wait for the suite and Inji services to be healthy")
@@ -292,12 +477,34 @@ def build_parser() -> argparse.ArgumentParser:
     selftest = sub.add_parser("selftest", help="mutation-test the SD-JWT probes against a reference verifier (no Docker needed)")
     selftest.set_defaults(func=command_selftest)
 
+    matrix = sub.add_parser("matrix", help="run conformance matrix across multiple spec versions")
+    matrix.add_argument("--matrix", required=True, help="spec versions (comma-separated, e.g. oid4vp-draft23,oid4vp-draft24,oid4vp-1final)")
+    matrix.add_argument("--component", action="append", choices=COMPONENTS, help="component to test (repeatable)")
+    matrix.add_argument("--out", default=str(REPO_ROOT / "results"))
+    matrix.add_argument("--haip", action="store_true", help="enable HAIP certification features")
+    matrix.set_defaults(func=command_matrix)
+
+    court = sub.add_parser("court", help="Holder's Court: replay/promote frozen findings and run agent sessions")
+    court_sub = court.add_subparsers(dest="court_command", required=True)
+    court_replay = court_sub.add_parser("replay", help="rebuild every frozen fixture and re-derive its verdict matrix (pure Python, no LLM)")
+    court_replay.set_defaults(func=command_court_replay)
+    court_promote = court_sub.add_parser("promote", help="promote a pending draft to fixtures/ (human gate; refuses drafts that do not replay)")
+    court_promote.add_argument("id", help="pending draft id, e.g. a finding id from `court session`")
+    court_promote.add_argument("--force", action="store_true", help="promote even if the draft does not replay")
+    court_promote.set_defaults(func=command_court_promote)
+
     attest = sub.add_parser("attest", help="emit an in-toto Test Result statement")
     attest.add_argument("--results", required=True)
     attest.add_argument("--subject", action="append", default=[], help="name=sha256:<hex> (repeatable)")
     attest.add_argument("--url", default="")
     attest.add_argument("--out")
     attest.set_defaults(func=command_attest)
+
+    certify_package_cmd = sub.add_parser("certify-package", help="assemble an OpenID certification package ZIP from a run directory")
+    certify_package_cmd.add_argument("--results", required=True, help="path to results.json")
+    certify_package_cmd.add_argument("--out", help="output ZIP path (default: <run-dir>/certification-package.zip)")
+    certify_package_cmd.add_argument("--no-suite-export", action="store_true", help="exclude suite exports from the package")
+    certify_package_cmd.set_defaults(func=command_certify_package)
     return parser
 
 
@@ -313,6 +520,39 @@ def main(argv: list[str] | None = None) -> int:
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     try:
+        # When --matrix is passed to `run`, dispatch to the matrix command instead
+        if args.command == "run" and getattr(args, "matrix", None):
+            from .matrix import run_matrix, matrix_to_markdown, matrix_to_json
+            from .cli import _components
+
+            settings = Settings.from_env()
+            components = _components(args)
+            versions = [v.strip() for v in args.matrix.split(",") if v.strip()]
+            if len(versions) < 2:
+                log.error("--matrix requires at least two spec versions (comma-separated)")
+                return 2
+
+            out_root = Path(args.out).resolve()
+            run_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:17]
+            run_dir = out_root / f"matrix-{run_id}"
+            run_dir.mkdir(parents=True, exist_ok=True)
+
+            results = run_matrix(settings, components, versions, run_dir, args)
+
+            print(matrix_to_markdown(results))
+
+            matrix_json = run_dir / "matrix-results.json"
+            matrix_json.write_text(matrix_to_json(results), encoding="utf-8")
+            print(f"matrix  : {matrix_json}")
+
+            any_fail = False
+            for component, matrix_result in results.items():
+                if not matrix_result.all_passing:
+                    any_fail = True
+                if matrix_result.has_migration_regressions:
+                    any_fail = True
+            return 1 if any_fail else 0
+
         return int(args.func(args))
     except FileNotFoundError as exc:
         log.error("%s", exc)
